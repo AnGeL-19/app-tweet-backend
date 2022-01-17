@@ -7,7 +7,7 @@ const router = Router();
 
 // read toDo
 
-router.get('/new', createUser );
+router.post('/new', createUser );
 
 router.post('/', loginUser );
 

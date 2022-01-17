@@ -2,13 +2,15 @@ const {Schema,model} = require('mongoose');
 
 const CommentSchema = Schema({
 
-    date: {
-        type: Date,
-        default: new Date()
-    },
+    
     userComment: {
         type: Schema.Types.ObjectId,
         ref: 'User',
+        required: true,  
+    },
+    tweetComment: {
+        type: Schema.Types.ObjectId,
+        ref: 'Tweet',
         required: true,  
     },   
     commentText: {
@@ -22,6 +24,10 @@ const CommentSchema = Schema({
         type: Schema.Types.ObjectId,
         ref: 'User'
     }],
+    date: {
+        type: Date,
+        default: new Date()
+    },
     
 });
 

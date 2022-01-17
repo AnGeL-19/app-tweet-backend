@@ -1,6 +1,9 @@
 const {Schema, model} = require('mongoose');
 
 const TweetsGlobalSchema = Schema({
+    year:{
+        type: Number,
+    },
     posts: [{
         type: Schema.Types.ObjectId,
         ref: 'Tweet'

@@ -23,6 +23,10 @@ const UserSchema = Schema({
         type: String,
         default: ''
     },
+    imgUserBackground:{
+        type: String,
+        default: ''
+    },
     loginGoogle: {
         type: Boolean,
         default: false
