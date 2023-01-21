@@ -20,6 +20,10 @@ const CommentSchema = Schema({
     imgComment:{
         type: String,
     },
+    nLikes: {
+        type: Number,
+        default: 0
+    },
     likes: [{
         type: Schema.Types.ObjectId,
         ref: 'User'

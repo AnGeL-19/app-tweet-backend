@@ -26,11 +26,21 @@ class Server{
         // configuration sockets
         this.io = socketio( this.server );
 
+        // middlewares
+        this.middlewares();
+
+        // initialize sockets
+        // this.configurationSockets();
+
+        //routers api
+        this.routers();
+
     }
 
     middlewares(){
 
         //public
+        this.app.use(express.static('public'));
 
         //Cors
         this.app.use(cors());
@@ -45,12 +55,16 @@ class Server{
             createParentPath: true
         }));
 
-        // path api
-        this.app.use('/api/login', require('../router/auth'));
-        this.app.use('/api/tweets', require('../router/tweets'));
-        // this.app.use('/api/group', require('../router/group'));
-        // this.app.use('/api/user', require('../router/user'));
+        
 
+    }
+
+    routers(){
+        // path api
+        this.app.use('/api/login', require('../router/authRoute'));
+        this.app.use('/api/tweet', require('../router/tweetsRoute'));
+        this.app.use('/api/user', require('../router/userRoute'));
+        this.app.use('/api/tweets', require('../router/tweetsPeopleRoute'));
     }
 
     // configurationSockets(){
@@ -59,12 +73,6 @@ class Server{
 
     execute(){
         
-        // middlewares
-        this.middlewares();
-
-        // initialize sockets
-        // this.configurationSockets();
-
         // initialize server
         this.server.listen(this.port, () => {
             console.log('Server running on the port', this.port);

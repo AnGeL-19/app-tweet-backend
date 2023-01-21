@@ -17,7 +17,8 @@ const UserSchema = Schema({
         unique: true
     },
     bio: {
-        type: String
+        type: String,
+        default: ''
     },
     imgUser:{
         type: String,
@@ -43,19 +44,31 @@ const UserSchema = Schema({
         type: Schema.Types.ObjectId,
         ref: 'Tweet'
     }],
+    likes: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Tweet'
+    }],
     followers: [{
         type: Schema.Types.ObjectId,
         ref: 'User'
     }],
-    folling: [{
+    following: [{
         type: Schema.Types.ObjectId,
         ref: 'User'
     }],
 
 });
 
+// UserSchema.pre('find', function (next) {
+//     if (this.options._recursed) {
+//       return next();
+//     }
+//     this.populate({ path: "followers following", options: { _recursed: true } });
+//     next();
+// });
+
 UserSchema.method('toJSON', function() {
-    const { __v, _id, password, ...object} = this.toObject();
+    const { __v, _id, password,...object} = this.toObject();
     object.uid = _id;
     return object;
 });
