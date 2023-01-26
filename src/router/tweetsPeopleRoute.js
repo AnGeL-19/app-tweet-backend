@@ -28,7 +28,7 @@ router.get('/retweets/:uid', [
 ] , getTweetsAndRetweets ); 
 
 
-router.get('/hashtag',[
+router.get('/hashtags',[
     validateJWT,
 ], getHashtags )
 

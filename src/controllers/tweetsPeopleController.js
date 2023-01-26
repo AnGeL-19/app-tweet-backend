@@ -347,21 +347,23 @@ const getHashtags = async (req = request, res = response) => {
         const hashtags = await Hashtag.find({}).sort({ nTweets: -1 }).limit(5);
 
         const hts = hashtags.map(h => {
-            const {hashtagTweet, ...rest} = h._doc;
+            const {hashtagTweet, _id,...rest} = h._doc;
             return {
+                hid: _id,
                 ...rest,
             }
         })
 
         // console.log(hashtags);
 
-        res.status(200).json({
+        return res.status(200).json({
             ok: true,
             tweets: hts
         });
+
     } catch (e) {
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });

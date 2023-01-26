@@ -14,13 +14,13 @@ const getUsers = async (req = request, res) => {
         if(users){
 
             
-            res.status(200).json({
+            return res.status(200).json({
                 ok: true,
                 users
             })
 
         }else{
-            res.status(204).json({
+            return res.status(204).json({
                 ok: true,
                 msg: 'User not found'
             })
@@ -29,7 +29,7 @@ const getUsers = async (req = request, res) => {
 
     }catch(e){
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -70,7 +70,7 @@ const getUserById = async (req = request, res) => {
 
     }catch(e){
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -89,14 +89,14 @@ const getUserFollowers = async (req = request, res) => {
         if(user){
 
             const { followers, _id, ...rest } = user;
-            res.status(200).json({
+            return res.status(200).json({
                 ok: true,
                 uid: _id,
                 users: followers
             })
 
         }else{
-            res.status(204).json({
+            return res.status(204).json({
                 ok: true,
                 msg: 'User not found'
             })
@@ -105,7 +105,7 @@ const getUserFollowers = async (req = request, res) => {
 
     }catch(e){
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -124,14 +124,14 @@ const getUserFollowing = async (req = request, res) => {
         if(user){
 
             const { following, _id, ...rest } = user;
-            res.status(200).json({
+            return res.status(200).json({
                 ok: true,
                 uid: _id,
                 users: following
             })
 
         }else{
-            res.status(204).json({
+            return res.status(204).json({
                 ok: true,
                 msg: 'User not found'
             })
@@ -140,7 +140,7 @@ const getUserFollowing = async (req = request, res) => {
 
     }catch(e){
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -167,11 +167,15 @@ const addFollowAndUnfollow = async (req, res) => {
 
         if(user.following.includes(id)){
             console.log("si esta, dejar de seguir");
+            // userFollowing.following.length
+
             await Promise.all([
+                // user.updateOne({$pull: {following: id}}),
                 user.updateOne({$pull: {following: id}}), // PULL SACA DEL ARRAY
-                userFollowing.updateOne({$pull: {followers: uid}})
+                userFollowing.updateOne({$pull: {followers: uid}}),
+                // userFollowing.updateOne({$pull: {followers: uid}})
             ]);
-            res.status(200).json({
+            return res.status(200).json({
                 ok:true,
                 msg: 'Unfollow'
             })
@@ -181,7 +185,7 @@ const addFollowAndUnfollow = async (req, res) => {
                 user.updateOne({$push: {following: id}}), // PUSH SACA DEL ARRAY
                 userFollowing.updateOne({$push: {followers: uid}})
             ]);
-            res.status(200).json({
+            return res.status(200).json({
                 ok:true,
                 msg: 'Following'
             })
