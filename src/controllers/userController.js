@@ -1,30 +1,28 @@
 const {response, request} = require('express');
-const Tweet = require('../models/tweet');
-const TweetsGlobal = require('../models/tweetsGlobal');
 const User = require('../models/user');
 
 const getUsers = async (req = request, res) => {
 
     // const {idUser} = req.params;
-
+    const {uid} = req;
+    
     try{
 
-        const users = await User.find()
+        const user = await User.findById(uid).select('following')
 
-        if(users){
+        const followings = user.following.map( f => {
+            return {
+                _id: f
+            }
+        })
 
-            
-            return res.status(200).json({
-                ok: true,
-                users
-            })
-
-        }else{
-            return res.status(204).json({
-                ok: true,
-                msg: 'User not found'
-            })
-        }
+        const users = await User.find({$nor: [{_id: uid }, ...followings] })
+        .select('_id name bio imgUser imgUserBackground followers')
+        
+        return res.status(200).json({
+            ok: true,
+            data: users
+        })
 
 
     }catch(e){
@@ -52,7 +50,7 @@ const getUserById = async (req = request, res) => {
 
             return res.status(200).json({
                 ok: true,
-                user: {
+                data: {
                     uid,
                     ...restdata,
                     nfollowers: followers.length,
@@ -92,7 +90,7 @@ const getUserFollowers = async (req = request, res) => {
             return res.status(200).json({
                 ok: true,
                 uid: _id,
-                users: followers
+                data: followers
             })
 
         }else{
@@ -127,7 +125,7 @@ const getUserFollowing = async (req = request, res) => {
             return res.status(200).json({
                 ok: true,
                 uid: _id,
-                users: following
+                data: following
             })
 
         }else{
@@ -195,7 +193,7 @@ const addFollowAndUnfollow = async (req, res) => {
 
     }catch(e){
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -204,6 +202,40 @@ const addFollowAndUnfollow = async (req, res) => {
 
 }
 
+const getUsersRecomment = async (req = request, res = response) => {
+
+    const {uid} = req;
+
+    try {
+
+        // mongoose.ObjectId(uid)
+        const followingsUser = await User.findById(uid).select('following')
+        console.log(followingsUser);
+
+        const followings = followingsUser.following.map( f => {
+            return {
+                _id: f
+            }
+        })
+
+        const users = await User.find({$nor: [{_id: uid }, ...followings] })
+        .select('_id name bio imgUser imgUserBackground followers')
+        .limit(2)
+
+        return res.status(200).json({
+            ok: true,
+            data: users
+        }); 
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Error, talk to the admin'
+        });
+    }
+
+}
 
 module.exports = {
 
@@ -211,6 +243,6 @@ module.exports = {
     getUserById,
     getUsers,
     getUserFollowers,
-    getUserFollowing
-
+    getUserFollowing,
+    getUsersRecomment
 }

@@ -1,5 +1,6 @@
 const { response } = require('express');
 const { request } = require('express');
+
 const Tweet = require('../models/tweet');
 const User = require('../models/user');
 const Hashtag = require('../models/hashtag');
@@ -66,7 +67,7 @@ const getTweetsByUserId = async (req, res) => {
         return res.status(200).json({
             ok: true,
             uid: tweetsUser._id,
-            tweets
+            data: tweets
         })
 
     }catch(e){
@@ -214,7 +215,7 @@ const getTweetsFollowing = async (req = request, res = response) => {
         return res.status(200).json({
             ok: true,
             nTweets: tweets.length,
-            tweets: tweets.sort((a, b) => 
+            data: tweets.sort((a, b) => 
                         a.date > b.date ? -1 :
                         a.date < b.date ? 1:
                         0
@@ -236,10 +237,11 @@ const getTweetsFollowing = async (req = request, res = response) => {
 
 const getTweetsPopular = async (req = request, res = response) => {
 
+    const { lastest } = req.query
+
     try{
         
         const tweet = await Tweet.find({})
-        .sort({ nLikes: -1 })
         .populate({path:'userTweet', select: '_id name imgUser'})
         .populate({ 
             path: 'comentPeople',
@@ -250,6 +252,7 @@ const getTweetsPopular = async (req = request, res = response) => {
             },
             populate: {path: 'userComment', select: '_id imgUser name' }  
         })
+        .sort({ date: -1 })
         // .limit(10)
 
         console.log(tweet);
@@ -284,13 +287,13 @@ const getTweetsPopular = async (req = request, res = response) => {
 
         return res.status(200).json({
             ok: true,
-            tweets
+            data: tweets
         });
 
     }catch(e){
 
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -322,9 +325,9 @@ const getTweetsAndRetweets = async ( req = request, res = response) => {
         console.log(tr);
         // console.log(user);
 
-        res.status(200).json({
+        return res.status(200).json({
             ok: true,
-            tweetRetweet: tr
+            data: tr
         })
         
     } catch (e) {
@@ -358,7 +361,7 @@ const getHashtags = async (req = request, res = response) => {
 
         return res.status(200).json({
             ok: true,
-            tweets: hts
+            data: hts
         });
 
     } catch (e) {
@@ -435,12 +438,12 @@ const getSearchHashtag = async (req = request, res = response) => {
 
         return res.status(200).json({
             ok: true,
-            tweets
+            data: tweets
         });
 
     } catch (e) {
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -500,7 +503,7 @@ const getTweetsSaved = async (req = request, res = response) => {
         return res.status(200).json({
             ok: true,
             uid: tweetsUser._id,
-            tweets: tweets.sort((a, b) => 
+            data: tweets.sort((a, b) => 
                 a.date > b.date ? -1 :
                 a.date < b.date ? 1:
                 0
@@ -516,6 +519,7 @@ const getTweetsSaved = async (req = request, res = response) => {
     }
 
 }
+
 
 // await tweets.sort((date1, date2) => date1 - date2);
 
@@ -548,4 +552,6 @@ module.exports = {
     getSearchHashtag,
     getTweetsByUserId,
     getTweetsSaved,
+    
+
 }

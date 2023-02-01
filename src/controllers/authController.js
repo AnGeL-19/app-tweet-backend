@@ -30,15 +30,15 @@ const createUser =  async ( req=request, res= response) => {
         // generate JWT
         const token = await generateJWT(user.id);
 
-        res.json({
+        return res.status(200).json({
             ok: true,
-            user,
+            data: user,
             token
         });
 
     }catch(e){
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -48,7 +48,7 @@ const createUser =  async ( req=request, res= response) => {
 
 const loginUser =  async ( req=request, res= response) => {
 
-    const {email, password} = req.body;
+    const {email, password:psw} = req.body;
 
     try{
 
@@ -62,7 +62,7 @@ const loginUser =  async ( req=request, res= response) => {
         }
 
         // Validar el password
-        const validPassword = bcrypt.compareSync(password, user.password);
+        const validPassword = bcrypt.compareSync(psw, user.password);
         if(!validPassword){
             return res.status(404).json({
                 ok: false,
@@ -70,14 +70,14 @@ const loginUser =  async ( req=request, res= response) => {
             });
         }
 
-        const {followers, following, ...rest} = user;
-        const { _id: uid, ...restdata } = rest._doc
+        const {followers ,following, ...rest} = user;
+        const { _id: uid ,password, __v, ...restdata } = rest._doc
         // generate JWT
         const token = await generateJWT(user.id);
 
         return res.status(200).json({
             ok: true,
-            user: {
+            data: {
                 uid,
                 ...restdata,
                 nfollowers: followers.length,
@@ -88,7 +88,7 @@ const loginUser =  async ( req=request, res= response) => {
 
     }catch(err){
         console.log(err);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -105,12 +105,12 @@ const renewToken = async (req = request, res = response) => {
 
         const userDB =  await User.findById(id);
 
-        const {followers, following, ...rest} = userDB;
-        const { _id: uid, ...restdata } = rest._doc
+        const {followers, following , ...rest} = userDB;
+        const { _id: uid, password, __v ,...restdata } = rest._doc
         
         return res.status(200).json({
             ok: true,
-            user: {
+            data: {
                 uid,
                 ...restdata,
                 nfollowers: followers.length,

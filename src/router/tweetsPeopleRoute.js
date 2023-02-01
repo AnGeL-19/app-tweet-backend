@@ -1,7 +1,7 @@
 const {Router } = require('express');
 const { check } = require('express-validator');
 
-const { getTweetsFollowing, getTweetsPopular, getTweetsAndRetweets, getHashtags, getSearchHashtag, getTweetsByUserId, getTweetsSaved } = require('../controllers/tweetsPeopleController');
+const { getTweetsFollowing, getTweetsPopular, getTweetsAndRetweets, getHashtags, getSearchHashtag, getTweetsByUserId, getTweetsSaved, getUsersRecomment } = require('../controllers/tweetsPeopleController');
 const { validTweetExist, 
         validCommentExist } = require('../helpers/db-validationTweet');
 
@@ -9,8 +9,6 @@ const { validInputs, validParamHashtag } = require('../middlewares/validate-inpu
 const { validateJWT } = require('../middlewares/validate-jwt');
 
 const router = Router();
-
-
 
 router.get('/populates', [
     validateJWT,
@@ -31,6 +29,7 @@ router.get('/retweets/:uid', [
 router.get('/hashtags',[
     validateJWT,
 ], getHashtags )
+
 
 router.get('/hashtag/search',[
     validateJWT,
