@@ -237,11 +237,27 @@ const getTweetsFollowing = async (req = request, res = response) => {
 
 const getTweetsPopular = async (req = request, res = response) => {
 
-    const { lastest } = req.query
+    const { filter } = req.query
+
+    let objFilter = {}
+    if (filter==='top') {
+        objFilter={
+            sort: {
+                nLikes: -1
+                // nRetweets: -1
+            }
+        }
+    }else{
+        objFilter={
+            sort: {
+                date: -1
+            } 
+        }
+    }
 
     try{
-        
-        const tweet = await Tweet.find({})
+
+        const tweet = await Tweet.find({},null,objFilter)
         .populate({path:'userTweet', select: '_id name imgUser'})
         .populate({ 
             path: 'comentPeople',
@@ -252,10 +268,9 @@ const getTweetsPopular = async (req = request, res = response) => {
             },
             populate: {path: 'userComment', select: '_id imgUser name' }  
         })
-        .sort({ date: -1 })
-        // .limit(10)
+        // .sort({ date: -1 })
+        .limit(10)
 
-        console.log(tweet);
         const tweets = tweet.map( tw => {
 
             const { __v,_id: tid, userTweet, comentPeople, ...others } = tw._doc;
@@ -277,13 +292,7 @@ const getTweetsPopular = async (req = request, res = response) => {
                 }),
                 ...others
             }
-        }).sort((a, b) => 
-        a.nLikes > b.nLikes ? -1 :
-        a.nLikes < b.nLikes ? 1:
-        a.nRetweets > b.nRetweets ? -1 :
-        a.nRetweets < b.nRetweets ? 1:
-        0
-        )
+        })
 
         return res.status(200).json({
             ok: true,
