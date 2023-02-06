@@ -3,7 +3,6 @@ const User = require('../models/user');
 
 const getUsers = async (req = request, res) => {
 
-    // const {idUser} = req.params;
     const {uid} = req;
     
     try{
@@ -159,9 +158,6 @@ const addFollowAndUnfollow = async (req, res) => {
             User.findById(uid).populate()
         ])
 
-        console.log(user, userFollowing);
-
-        console.log(user.following);
 
         if(user.following.includes(id)){
             console.log("si esta, dejar de seguir");
@@ -178,7 +174,6 @@ const addFollowAndUnfollow = async (req, res) => {
                 msg: 'Unfollow'
             })
         }else{
-            console.log("no esta, seguir");
             await Promise.all([
                 user.updateOne({$push: {following: id}}), // PUSH SACA DEL ARRAY
                 userFollowing.updateOne({$push: {followers: uid}})
@@ -210,7 +205,6 @@ const getUsersRecomment = async (req = request, res = response) => {
 
         // mongoose.ObjectId(uid)
         const followingsUser = await User.findById(uid).select('following')
-        console.log(followingsUser);
 
         const followings = followingsUser.following.map( f => {
             return {
