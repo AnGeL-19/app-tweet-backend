@@ -4,7 +4,7 @@ const User = require('../models/user');
 const getUsers = async (req = request, res) => {
 
     const {uid} = req;
-    
+
     try{
 
         const user = await User.findById(uid).select('following')

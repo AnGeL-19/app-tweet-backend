@@ -12,19 +12,32 @@ const getTweetsByUserId = async (req, res) => {
 
     const {id} = req.params;
     // const {uid: iduser} = req;
-    const {limit = 5, start = 1, end = 1} = req.query;
+    const {limit = 5, start = 1, end = 1, filter} = req.query;
+    
+    let options;
+
+    if (filter === 'likes') {
+        options = (a,b) => a.nLikes > b.nLikes ? -1:
+                        a.nLikes < b.nLikes ? 1:
+                        0
+    }else{
+        options = (a,b) => a.date> b.date ? -1:
+                        a.date < b.date ? 1:
+                        0
+    }
 
     try{
 
         const tweetsUser = await User.findById(id)
         .populate({
-            path: 'posts', 
+            path: 'posts',
             populate: {
                 path: 'userTweet', 
                 select: '_id imgUser name followers',
-            }
+            }            
         }).populate({
             path: 'posts',
+            options,
             populate:{
                 path: 'comentPeople',
                 options: { 
@@ -35,6 +48,7 @@ const getTweetsByUserId = async (req, res) => {
                 populate: {path: 'userComment', select: '_id imgUser name' }
             }
         })
+        
 
         const tweets = tweetsUser.posts.map(tweet => {
      
@@ -59,9 +73,7 @@ const getTweetsByUserId = async (req, res) => {
                 })
             }
         }).sort((a, b) => 
-            a.date > b.date ? -1 :
-            a.date < b.date ? 1:
-            0
+            options(a,b)
         )
 
         return res.status(200).json({
@@ -72,7 +84,7 @@ const getTweetsByUserId = async (req, res) => {
 
     }catch(e){
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -318,21 +330,25 @@ const getTweetsAndRetweets = async ( req = request, res = response) => {
         const {uid} = req.params;
         const tr = [];
 
-        const user = await User.findById(uid).populate({path: 'posts retweets', populate: {path: 'userTweet', select: '_id imgUser name'}});
+        const user = await User.findById(uid)
+        .populate(
+            {
+                path: 'posts retweets', 
+                populate: {
+                    path: 'userTweet', select: '_id imgUser name'
+                }
+            });
         
         const userRetweets = user.retweets.map(r => {
-            const {followers, following, ...rest} = r.userTweet._doc
+            const {followers, following, __v,...rest} = r.userTweet._doc
             return {
                 ...r._doc,
                 userTweet: rest,
                 userRetweet: 'You retweeted'
             }
         } )
-
-        // console.log(a)      
+   
         tr.push(...user.posts, ...userRetweets)
-        console.log(tr);
-        // console.log(user);
 
         return res.status(200).json({
             ok: true,
