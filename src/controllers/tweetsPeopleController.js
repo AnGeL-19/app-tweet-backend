@@ -164,7 +164,7 @@ const getTweetsFollowing = async (req = request, res = response) => {
                             tweets.push({
                                 tid,
                                 ...restTweetClean,
-                                retweetUser: 'You Retweeted',
+                                userRetweet: 'You Retweeted',
                                 retweets: retweets.map( retweet => retweet._id),
                                 userTweet: {
                                     uid: _id,
@@ -183,7 +183,7 @@ const getTweetsFollowing = async (req = request, res = response) => {
                             tweets.push({
                                 tid,
                                 ...restTweetClean,
-                                retweetUser: `${retweet.name} Retweeted`,
+                                userRetweet: `${retweet.name} Retweeted`,
                                 retweets: retweets.map( retweet => retweet._id),
                                 userTweet: {
                                     uid: _id,
@@ -337,17 +337,40 @@ const getTweetsAndRetweets = async ( req = request, res = response) => {
                 populate: {
                     path: 'userTweet', select: '_id imgUser name'
                 }
-            });
+            })
+        .populate({
+                path: 'posts retweets', 
+                populate: {
+                    path: 'comentPeople',
+                    options: { 
+                        skip: 0, // Starting Row
+                        limit: 3, // Ending Row
+                        sort: { nLikes : -1 } 
+                    },
+                    populate: {path: 'userComment', select: '_id imgUser name' }  
+                }  
+            })
+            .limit(10)
         
         const userRetweets = user.retweets.map(r => {
             const {followers, following, __v,...rest} = r.userTweet._doc
             return {
                 ...r._doc,
                 userTweet: rest,
-                userRetweet: 'You retweeted'
+                userRetweet: 'You retweeted',
+                comentPeople: r.comentPeople.map(cmm => {
+                    const { ...rest } = cmm
+                    const { _id, ...restClean } = rest._doc
+                    return {
+                        cid: _id,
+                        ...restClean
+                    }
+                })
             }
         } )
    
+        console.log(userRetweets);
+
         tr.push(...user.posts, ...userRetweets)
 
         return res.status(200).json({
@@ -357,7 +380,7 @@ const getTweetsAndRetweets = async ( req = request, res = response) => {
         
     } catch (e) {
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         })
