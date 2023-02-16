@@ -503,7 +503,7 @@ const getSearchHashtag = async (req = request, res = response) => {
 const getTweetsSaved = async (req = request, res = response) => {
 
     const {uid:id} = req;
-    const {limit = 5, start = 1, end = 1} = req.query;
+    const {limit = 5, start = 1, end = 1, filter} = req.query;
     console.log(id);
 
     try{
@@ -548,19 +548,24 @@ const getTweetsSaved = async (req = request, res = response) => {
             }
         });
 
+        let options;
+        if (filter === 'likes') {
+            options = (a,b) =>  b.nLikes - a.nLikes
+        }else{
+            options = (a,b) => b.date - a.date        
+        }
+
         return res.status(200).json({
             ok: true,
             uid: tweetsUser._id,
-            data: tweets.sort((a, b) => 
-                a.date > b.date ? -1 :
-                a.date < b.date ? 1:
-                0
-            )
+            data: tweets.sort((a, b) => {
+                return options(a,b)
+            })
         })
 
     }catch(e){
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
