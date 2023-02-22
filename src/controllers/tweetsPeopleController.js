@@ -573,6 +573,66 @@ const getTweetsSaved = async (req = request, res = response) => {
 
 }
 
+const getTweetsSearch = async (req = request, res = response) => {
+
+    const {limit = 5, start = 1, end = 1, find} = req.query;
+
+    try {
+        const tweet = await Tweet.find({ description : { $regex: `${find}` } })
+        .populate({path:'userTweet', select: '_id name imgUser'})
+        .populate({ 
+            path: 'comentPeople',
+            options: { 
+                skip: 0, // Starting Row
+                limit: 3, // Ending Row
+                sort: { nLikes : -1 } 
+            },
+            populate: {path: 'userComment', select: '_id imgUser name' }  
+        })
+        .sort({ date: -1 })
+        .limit(10)
+
+        console.log(tweet);
+
+        const tweets = tweet.map( tw => {
+
+            const { __v,_id: tid, userTweet, comentPeople, ...others } = tw._doc;
+            const {followers, following, _id: uid,...restUser } = userTweet._doc;
+
+            return {
+                tid,
+                userTweet: {
+                    uid,
+                    ...restUser
+                },
+                comentPeople: comentPeople.map(cmm => {
+                    const { ...rest } = cmm
+                    const { _id, ...restClean } = rest._doc
+                    return {
+                        cid: _id,
+                        ...restClean
+                    }
+                }),
+                ...others
+            }
+        })
+
+        return res.status(200).json({
+            ok: true,
+            data: tweets
+        });
+
+    } catch (error) {
+
+        console.log(error);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Error, talk to the admin'
+        });
+
+    }
+
+}
 
 // await tweets.sort((date1, date2) => date1 - date2);
 
@@ -605,6 +665,6 @@ module.exports = {
     getSearchHashtag,
     getTweetsByUserId,
     getTweetsSaved,
-    
+    getTweetsSearch
 
 }
