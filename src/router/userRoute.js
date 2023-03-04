@@ -18,8 +18,6 @@ router.get('/recomment',[
 
 router.get('/:id', validateJWT , getUserById  );
 
-
-
 router.get('/followers/:id', validateJWT , getUserFollowers  );
 
 router.get('/following/:id', validateJWT , getUserFollowing  );

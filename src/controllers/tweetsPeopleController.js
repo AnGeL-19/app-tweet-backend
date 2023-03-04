@@ -503,7 +503,7 @@ const getSearchHashtag = async (req = request, res = response) => {
 const getTweetsSaved = async (req = request, res = response) => {
 
     const {uid:id} = req;
-    const {limit = 5, start = 1, end = 1, filter} = req.query;
+    const {limit = 5, start = 1, end = 1} = req.query;
     console.log(id);
 
     try{
@@ -548,19 +548,20 @@ const getTweetsSaved = async (req = request, res = response) => {
             }
         });
 
-        let options;
-        if (filter === 'likes') {
-            options = (a,b) =>  b.nLikes - a.nLikes
-        }else{
-            options = (a,b) => b.date - a.date        
-        }
+        // let options;
+        // if (filter === 'likes') {
+        //     options = (a,b) =>  b.nLikes - a.nLikes
+        // }else{
+        //     options = (a,b) => b.date - a.date        
+        // }
+        // .sort((a, b) => {
+        //     return b.date - a.date 
+        // })
 
         return res.status(200).json({
             ok: true,
             uid: tweetsUser._id,
-            data: tweets.sort((a, b) => {
-                return options(a,b)
-            })
+            data: tweets.reverse()
         })
 
     }catch(e){
@@ -572,6 +573,78 @@ const getTweetsSaved = async (req = request, res = response) => {
     }
 
 }
+
+const getTweetsLiked = async (req = request, res = response) => {
+
+    const {uid:id} = req;
+    const {limit = 5, start = 1, end = 1} = req.query;
+    console.log('liked');
+
+    try{
+
+        const tweetsUser = await User.findById(id)
+        .populate({
+            path: '_id likes', 
+            populate: {path: 'userTweet', select: '_id imgUser name'}
+        }).populate({ 
+            path: '_id likes', 
+            populate: {
+                path: 'comentPeople',
+                options: { 
+                    skip: 0, // Starting Row
+                    limit: 3, // Ending Row
+                    sort: { nLikes : -1 } 
+                },
+                populate: {path: 'userComment', select: '_id imgUser name' }
+            }  
+        })
+
+        const tweets = tweetsUser.likes.map(tweet => {
+     
+            const { _id: tid, __v, comentPeople ,userTweet, ...rest } = tweet._doc;
+            const { _id: uid ,...restUser } = userTweet._doc
+
+            return{
+                tid,
+                ...rest,
+                userTweet: {
+                    uid,
+                    ...restUser
+                },
+                comentPeople: comentPeople.map(cmm => {
+                    const { ...rest } = cmm
+                    const { _id, ...restClean } = rest._doc
+                    return {
+                        cid: _id,
+                        ...restClean
+                    }
+                })
+            }
+        });
+
+        // let options;
+        // if (filter === 'likes') {
+        //     options = (a,b) =>  b.nLikes - a.nLikes
+        // }else{
+        //     options = (a,b) => b.date - a.date        
+        // }
+
+        return res.status(200).json({
+            ok: true,
+            uid: tweetsUser._id,
+            data: tweets.reverse()
+        })
+
+    }catch(e){
+        console.log(e);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Error, talk to the admin'
+        });
+    }
+
+}
+
 
 const getTweetsSearch = async (req = request, res = response) => {
 
@@ -634,6 +707,8 @@ const getTweetsSearch = async (req = request, res = response) => {
 
 }
 
+
+
 // await tweets.sort((date1, date2) => date1 - date2);
 
 // const tweets = await Tweet.where({
@@ -665,6 +740,7 @@ module.exports = {
     getSearchHashtag,
     getTweetsByUserId,
     getTweetsSaved,
-    getTweetsSearch
+    getTweetsSearch,
+    getTweetsLiked
 
 }

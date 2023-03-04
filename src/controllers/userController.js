@@ -4,6 +4,7 @@ const User = require('../models/user');
 const getUsers = async (req = request, res) => {
 
     const {uid} = req;
+    const { search = '' } = req.query;
 
     try{
 
@@ -15,7 +16,7 @@ const getUsers = async (req = request, res) => {
             }
         })
 
-        const users = await User.find({$nor: [{_id: uid }, ...followings] })
+        const users = await User.find({ name : { $regex: `${search}` }, $nor: [{_id: uid }, ...followings] })
         .select('_id name bio imgUser imgUserBackground followers')
         
         return res.status(200).json({
