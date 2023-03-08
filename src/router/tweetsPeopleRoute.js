@@ -44,8 +44,6 @@ router.get('/hashtag/search',[
     validInputs
 ], getSearchHashtag )
 
-
-
 router.get('/:id', [
     validateJWT,
 ] , getTweetsByUserId );

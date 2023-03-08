@@ -4,6 +4,7 @@ const { request } = require('express');
 const Tweet = require('../models/tweet');
 const User = require('../models/user');
 const Hashtag = require('../models/hashtag');
+const { populate } = require('../models/tweet');
 
 
 
@@ -98,147 +99,129 @@ const getTweetsFollowing = async (req = request, res = response) => {
     try{
         const {uid} = req;
 
-        const {limit = 5, start = 1, end = 1} = req.query;
-  
-        // const tweets =  [];
-        let valueTweetsFollowing = [];
-        const arrayRandomNumber = []; 
+        const {limit = 5, start = 1, end = 5} = req.query;
 
-        const tweetsFollowing = await User.findById(uid).select('following')
-        .populate({ 
-            path: 'following', select: 'posts',
-            populate: {
-                path: 'posts' ,
-                options: { 
-                    skip: 0, // Starting Row
-                    // limit: 1, // Ending Row
-                    sort: { date : -1 } 
-                },
-                populate: {
-                    path: 'userTweet retweets', 
-                    select: '_id imgUser name' }
-            }
-        })
-        .populate({ 
-            path: 'following', select: 'posts',
-            populate: {
-                path: 'posts' ,
-                options: { 
-                    skip: 0, // Starting Row
-                    // limit: 1, // Ending Row
-                    sort: { date : -1 } 
-                },
-                populate: {
-                    path: 'comentPeople',
-                    options: { 
-                        skip: 0, // Starting Row
-                        limit: 3, // Ending Row
-                        sort: { nLikes : -1 } 
-                    },
-                    populate: {path: 'userComment', select: '_id imgUser name' }
-                },
+        const user = await User.findById(uid).select('following')
+
+        const followings = user.following.map( f => {
+            return {
+                _id: f
             }
         })
 
-        // const { _id: uid } = tweetsFollowing;
-        console.log(tweetsFollowing);
+        console.log(start, end);
+
+        // userTweet
+        // { name : { $regex: `${search}` }, $nor: [{_id: uid }, ...followings] }
+        // likes: { $in: ['vaporizing', 'talking'] }
+
+        // console.log("--------------------------------");
+
+        const tweetsFollowing = await Tweet.find({userTweet: {$in: [...followings]}},null,{ 
+            skip: start, // Starting Row
+            limit: end, // Ending Row
+            sort: { date : -1 } 
+        })
+        .populate({   
+            path: 'userTweet retweets', 
+            select: '_id imgUser name'
+        })
+        .populate({   
+            path: 'comentPeople',
+            options: { 
+                skip: 1, // Starting Row
+                limit: 3, // Ending Row
+                sort: { nLikes : -1 } 
+            },
+            populate: {path: 'userComment', select: '_id imgUser name' }
+        }).limit(limit)
+
+        // console.log(tweetsFollowing);
         
-        // TOMAR 10 TWEETS POR TODOS LOS USURIOS
-        const tweets = []    
 
-        tweetsFollowing.following.map( postsUser => {
+        const tweetF = tweetsFollowing.map( tweet => {
 
-            const { _id: uidF ,posts } = postsUser;   
-            // console.log(posts);      
+            const { userTweet ,...restTweet } = tweet;
+            const { _id: tid, retweets, comentPeople, __v, ...restTweetClean } = restTweet._doc
+            const { _id, ...restUser } = userTweet._doc;
 
-            posts.map( tweet => {
-                const { userTweet, ...restTweet } = tweet;
-                const { _id: tid, retweets, comentPeople ,...restTweetClean } = restTweet._doc
-                const { _id, ...restUser } = userTweet._doc;
+            if (retweets.length !== 0) {
 
-                if (retweets.length !== 0) {
+                retweets.map( retweet => {
 
-                    retweets.map( retweet => {
-
-                        if(retweet._id === uid ){
-                            tweets.push({
-                                tid,
-                                ...restTweetClean,
-                                userRetweet: 'You Retweeted',
-                                retweets: retweets.map( retweet => retweet._id),
-                                userTweet: {
-                                    uid: _id,
-                                    ...restUser
-                                },
-                                comentPeople: comentPeople.map(cmm => {
-                                    const { ...rest } = cmm
-                                    const { _id, ...restClean } = rest._doc
-                                    return {
-                                        cid: _id,
-                                        ...restClean
-                                    }
-                                })
-                            })
-                        }else if (tweetsFollowing.following.find( userR => `${userR._id}` === `${retweet._id}`)) {
-                            tweets.push({
-                                tid,
-                                ...restTweetClean,
-                                userRetweet: `${retweet.name} Retweeted`,
-                                retweets: retweets.map( retweet => retweet._id),
-                                userTweet: {
-                                    uid: _id,
-                                    ...restUser
-                                },
-                                comentPeople: comentPeople.map(cmm => {
-                                    const { ...rest } = cmm
-                                    const { _id, ...restClean } = rest._doc
-                                    return {
-                                        cid: _id,
-                                        ...restClean
-                                    }
-                                })
-                            })
-                            console.log(`${retweet.name} Retweeted`);
-                        }
-                    })                  
-                }
-
-                tweets.push({
-                    tid,
-                    ...restTweetClean,
-                    retweets: retweets.map( retweet => retweet._id),
-                    userTweet: {
-                        uid: _id,
-                        ...restUser
-                    },
-                    comentPeople: comentPeople.map(cmm => {
-                        const { ...rest } = cmm
-                        const { _id, ...restClean } = rest._doc
+                    if(retweet._id === uid ){
                         return {
-                            cid: _id,
-                            ...restClean
+                            tid,
+                            ...restTweetClean,
+                            userRetweet: 'You Retweeted',
+                            retweets: retweets.map( retweet => retweet._id),
+                            userTweet: {
+                                uid: _id,
+                                ...restUser
+                            },
+                            comentPeople: comentPeople.map(cmm => {
+                                const { ...rest } = cmm
+                                const { _id, __v, ...restClean } = rest._doc
+                                return {
+                                    cid: _id,
+                                    ...restClean
+                                }
+                            })
                         }
-                    })
-                })
+                    }else if (tweetsFollowing.following.find( userR => `${userR._id}` === `${retweet._id}`)) {
+                        return {
+                            tid,
+                            ...restTweetClean,
+                            userRetweet: `${retweet.name} Retweeted`,
+                            retweets: retweets.map( retweet => retweet._id),
+                            userTweet: {
+                                uid: _id,
+                                ...restUser
+                            },
+                            comentPeople: comentPeople.map(cmm => {
+                                const { ...rest } = cmm
+                                const { _id, __v, ...restClean } = rest._doc
+                                return {
+                                    cid: _id,
+                                    ...restClean
+                                }
+                            })
+                        }
+                    }
+                })                  
+            }
 
-            });   
-        })
+            return {
+                tid,
+                ...restTweetClean,
+                retweets: retweets.map( retweet => retweet._id),
+                userTweet: {
+                    uid: _id,
+                    ...restUser
+                },
+                comentPeople: comentPeople.map(cmm => {
+                    const { ...rest } = cmm
+                    const { _id, __v, ...restClean } = rest._doc
+                    return {
+                        cid: _id,
+                        ...restClean
+                    }
+                })
+            }
+
+        });   
+        
 
         return res.status(200).json({
             ok: true,
-            nTweets: tweets.length,
-            data: tweets.sort((a, b) => 
-                        a.date > b.date ? -1 :
-                        a.date < b.date ? 1:
-                        0
-                    )
-            // tweetsFollowing
+            length: tweetF.length,
+            data: tweetF
         });
 
     }catch(e){
 
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -249,18 +232,25 @@ const getTweetsFollowing = async (req = request, res = response) => {
 
 const getTweetsPopular = async (req = request, res = response) => {
 
-    const { filter } = req.query
-
+    const {filter, limit = 5, start = 1, end = 5} = req.query;
+    // { 
+    //     skip: start, // Starting Row
+    //     limit: end, // Ending Row
+    //     sort: { date : -1 } 
+    console.log(filter, limit , start, end );
+    
     let objFilter = {}
+
     if (filter==='top') {
         objFilter={
-            sort: {
-                nLikes: -1
-                // nRetweets: -1
-            }
+            skip: start,
+            limit: end,
+            sort: { nLikes: -1 }
         }
     }else{
         objFilter={
+            skip: start,
+            limit: end,
             sort: {
                 date: -1
             } 
@@ -270,7 +260,10 @@ const getTweetsPopular = async (req = request, res = response) => {
     try{
 
         const tweet = await Tweet.find({},null,objFilter)
-        .populate({path:'userTweet', select: '_id name imgUser'})
+        .populate({
+            path:'userTweet', 
+            select: '_id name imgUser'
+        })
         .populate({ 
             path: 'comentPeople',
             options: { 
@@ -278,10 +271,12 @@ const getTweetsPopular = async (req = request, res = response) => {
                 limit: 3, // Ending Row
                 sort: { nLikes : -1 } 
             },
-            populate: {path: 'userComment', select: '_id imgUser name' }  
+            populate: {
+                path: 'userComment', 
+                select: '_id imgUser name' 
+            }  
         })
-        // .sort({ date: -1 })
-        .limit(10)
+
 
         const tweets = tweet.map( tw => {
 
@@ -308,6 +303,7 @@ const getTweetsPopular = async (req = request, res = response) => {
 
         return res.status(200).json({
             ok: true,
+            length: tweets.length,
             data: tweets
         });
 
@@ -425,13 +421,18 @@ const getHashtags = async (req = request, res = response) => {
 
 const getSearchHashtag = async (req = request, res = response) => {
 
-    // BUSCAR DE TWEETS DE HASHTAGS 
-
-    const {hashtag} = req.query;
-
+    const {hashtag, limit = 5, start = 1, end = 5} = req.query;
+    // { 
+    //     skip: start, // Starting Row
+    //     limit: end, // Ending Row
+    //     sort: { date : -1 } 
     try {
         
-        const hashtags = await Hashtag.findOne({nameHashtag: hashtag})
+        const hashtags = await Hashtag.findOne({nameHashtag: hashtag},null,{
+                skip: start, // Starting Row
+                limit: end, // Ending Row
+                sort: { nTweets : -1 } 
+        })
         .populate({
             path: 'hashtagTweet', 
             populate: {
@@ -473,14 +474,15 @@ const getSearchHashtag = async (req = request, res = response) => {
                 }),
                 ...others
             }
-        }).sort((a, b) =>
-            // a.date > b.date ? -1 :
-            // a.date < b.date ? 1:
-            a.nLikes > b.nLikes ? -1 :
-            a.nLikes < b.nLikes ? 1:
-            a.nRetweets > b.nRetweets ? -1 :
-            a.nRetweets < b.nRetweets ? 1:
-            0)
+        })
+        // .sort((a, b) =>
+        //     // a.date > b.date ? -1 :
+        //     // a.date < b.date ? 1:
+        //     a.nLikes > b.nLikes ? -1 :
+        //     a.nLikes < b.nLikes ? 1:
+        //     a.nRetweets > b.nRetweets ? -1 :
+        //     a.nRetweets < b.nRetweets ? 1:
+        //     0)
 
         console.log(tweets);
 
@@ -547,16 +549,7 @@ const getTweetsSaved = async (req = request, res = response) => {
                 })
             }
         });
-
-        // let options;
-        // if (filter === 'likes') {
-        //     options = (a,b) =>  b.nLikes - a.nLikes
-        // }else{
-        //     options = (a,b) => b.date - a.date        
-        // }
-        // .sort((a, b) => {
-        //     return b.date - a.date 
-        // })
+// 
 
         return res.status(200).json({
             ok: true,
@@ -622,12 +615,6 @@ const getTweetsLiked = async (req = request, res = response) => {
             }
         });
 
-        // let options;
-        // if (filter === 'likes') {
-        //     options = (a,b) =>  b.nLikes - a.nLikes
-        // }else{
-        //     options = (a,b) => b.date - a.date        
-        // }
 
         return res.status(200).json({
             ok: true,
