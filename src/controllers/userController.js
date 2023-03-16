@@ -1,10 +1,14 @@
 const {response, request} = require('express');
+const bcrypt = require('bcryptjs');
+
 const User = require('../models/user');
 
 const getUsers = async (req = request, res) => {
 
     const {uid} = req;
-    const { search = '', limit = 5, start = 1, end = 5 } = req.query;
+    const { search = '', limit = 5, start = 0, end = 5 } = req.query;
+
+    console.log(limit , start , end );
 
     try{
 
@@ -26,8 +30,11 @@ const getUsers = async (req = request, res) => {
         .select('_id name bio imgUser imgUserBackground followers')
         .limit(limit)
         
+        console.log(users);
+
         return res.status(200).json({
             ok: true,
+            length: users.length,
             data: users
         })
 
@@ -63,6 +70,57 @@ const getUserById = async (req = request, res) => {
                     nfollowers: followers.length,
                     nfollowing: following.length
                 }
+            })
+
+        }else{
+            return res.status(204).json({
+                ok: true,
+                msg: 'User not found'
+            })
+        }
+
+
+    }catch(e){
+        console.log(e);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Error, talk to the admin'
+        });
+    }
+
+}
+
+const updateUser = async (req = request, res) => {
+
+    const {uid} = req;
+    const {imgUser, imgUserBackground, name, bio, email, password} = req.body;
+    
+    let objUser = {
+        imgUser, 
+        imgUserBackground, 
+        name, 
+        bio, 
+        email
+    };
+
+    try{
+        
+
+        if (password) {
+            const salt = bcrypt.genSaltSync();
+            objUser.password = bcrypt.hashSync(password, salt);
+        }
+        
+        const user = await User.findByIdAndUpdate(uid, objUser, { new: true });
+
+        // const {followers, following, ...rest} = user;
+        // const { _id: uid, ...restdata } = rest._doc
+        console.log(user);
+        if(user){
+
+            return res.status(200).json({
+                ok: true,
+                data: 'Update succesful'
             })
 
         }else{
@@ -241,6 +299,7 @@ const getUsersRecomment = async (req = request, res = response) => {
 
 module.exports = {
 
+    updateUser,
     addFollowAndUnfollow,
     getUserById,
     getUsers,

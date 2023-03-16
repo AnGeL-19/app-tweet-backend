@@ -12,19 +12,16 @@ const getTweetsByUserId = async (req, res) => {
 
 
     const {id} = req.params;
-    // const {uid: iduser} = req;
+    const {uid: iduser} = req;
     const {limit = 5, start = 0, end = 5, filter} = req.query;
     
     let options;
 
+
     if (filter === 'likes') {
-        options = (a,b) => a.nLikes > b.nLikes ? -1:
-                        a.nLikes < b.nLikes ? 1:
-                        0
+        options = (a,b) => b.nLikes - a.nLikes                      
     }else{
-        options = (a,b) => a.date> b.date ? -1:
-                        a.date < b.date ? 1:
-                        0
+        options = (a,b) =>  b.date - a.date
     }
 
     try{
@@ -38,7 +35,6 @@ const getTweetsByUserId = async (req, res) => {
             }            
         }).populate({
             path: 'posts',
-            options,
             populate:{
                 path: 'comentPeople',
                 options: { 
@@ -50,37 +46,62 @@ const getTweetsByUserId = async (req, res) => {
             }
         })
         
-
-        const tweets = tweetsUser.posts.slice(start, end).map(tweet => {
-     
-            const { _id: tid, __v, userTweet, comentPeople, ...rest } = tweet._doc;
-            const { followers, _id: uid ,...restUser } = userTweet._doc
-
-            return{
-                tid,
-                ...rest,
-                userTweet: {
-                    uid,
-                    ...restUser,
-                    followers: followers.length
-                },
-                comentPeople: comentPeople.map(cmm => {
-                    const { ...rest } = cmm
-                    const { _id, ...restClean } = rest._doc
-                    return {
-                        cid: _id,
-                        ...restClean
-                    }
-                })
-            }
-        }).sort((a, b) => 
-            options(a,b)
-        )
+        let tweets = [];
+        if(iduser != id){
+            tweets = tweetsUser.posts.reverse().filter(tw => tw.showEveryone).slice(start, end).map(tweet => {
+                const { _id: tid, __v, userTweet, comentPeople, ...rest } = tweet._doc;
+                const { followers, _id: uid ,...restUser } = userTweet._doc
+    
+                return{
+                    tid,
+                    ...rest,
+                    userTweet: {
+                        uid,
+                        ...restUser,
+                        followers: followers.length
+                    },
+                    comentPeople: comentPeople.map(cmm => {
+                        const { ...rest } = cmm
+                        const { _id, ...restClean } = rest._doc
+                        return {
+                            cid: _id,
+                            ...restClean
+                        }
+                    })
+                }
+            })
+        }else{
+            tweets = tweetsUser.posts.reverse().slice(start, end).map(tweet => {
+                const { _id: tid, __v, userTweet, comentPeople, ...rest } = tweet._doc;
+                const { followers, _id: uid ,...restUser } = userTweet._doc
+    
+                return{
+                    tid,
+                    ...rest,
+                    userTweet: {
+                        uid,
+                        ...restUser,
+                        followers: followers.length
+                    },
+                    comentPeople: comentPeople.map(cmm => {
+                        const { ...rest } = cmm
+                        const { _id, ...restClean } = rest._doc
+                        return {
+                            cid: _id,
+                            ...restClean
+                        }
+                    })
+                }
+            })
+        }
+        
 
         return res.status(200).json({
             ok: true,
             uid: tweetsUser._id,
-            data: tweets
+            data: tweets.sort((a, b) => 
+            options(a,b)
+        )
         })
 
     }catch(e){
@@ -103,21 +124,21 @@ const getTweetsFollowing = async (req = request, res = response) => {
 
         const user = await User.findById(uid).select('following')
 
+        console.log(user);
+
         const followings = user.following.map( f => {
             return {
                 _id: f
             }
         })
 
-        console.log(start, end);
+        console.log(followings);
 
         // userTweet
         // { name : { $regex: `${search}` }, $nor: [{_id: uid }, ...followings] }
         // likes: { $in: ['vaporizing', 'talking'] }
 
-        // console.log("--------------------------------");
-
-        const tweetsFollowing = await Tweet.find({userTweet: {$in: [...followings]}},null,{ 
+        const tweetsFollowing = await Tweet.find({userTweet: {$in: [...followings]}, showEveryone: true},null,{ 
             skip: start, // Starting Row
             limit: end, // Ending Row
             sort: { date : -1 } 
@@ -136,64 +157,26 @@ const getTweetsFollowing = async (req = request, res = response) => {
             populate: {path: 'userComment', select: '_id imgUser name' }
         }).limit(limit)
 
-        // console.log(tweetsFollowing);
-        
-
         const tweetF = tweetsFollowing.map( tweet => {
 
             const { userTweet ,...restTweet } = tweet;
             const { _id: tid, retweets, comentPeople, __v, ...restTweetClean } = restTweet._doc
             const { _id, ...restUser } = userTweet._doc;
 
-            if (retweets.length !== 0) {
-
-                retweets.map( retweet => {
-
-                    if(retweet._id === uid ){
-                        return {
-                            tid,
-                            ...restTweetClean,
-                            userRetweet: 'You Retweeted',
-                            retweets: retweets.map( retweet => retweet._id),
-                            userTweet: {
-                                uid: _id,
-                                ...restUser
-                            },
-                            comentPeople: comentPeople.map(cmm => {
-                                const { ...rest } = cmm
-                                const { _id, __v, ...restClean } = rest._doc
-                                return {
-                                    cid: _id,
-                                    ...restClean
-                                }
-                            })
-                        }
-                    }else if (tweetsFollowing.following.find( userR => `${userR._id}` === `${retweet._id}`)) {
-                        return {
-                            tid,
-                            ...restTweetClean,
-                            userRetweet: `${retweet.name} Retweeted`,
-                            retweets: retweets.map( retweet => retweet._id),
-                            userTweet: {
-                                uid: _id,
-                                ...restUser
-                            },
-                            comentPeople: comentPeople.map(cmm => {
-                                const { ...rest } = cmm
-                                const { _id, __v, ...restClean } = rest._doc
-                                return {
-                                    cid: _id,
-                                    ...restClean
-                                }
-                            })
-                        }
-                    }
-                })                  
-            }
 
             return {
                 tid,
                 ...restTweetClean,
+                userRetweet: retweets.map( re => {
+                    if (re._id == uid) {
+                        return 'You Retweeted'
+                    }else if (followings.find(userR => `${userR._id}` == `${re._id}`)) {
+                        return `${re.name} Retweeted`
+                    }else{
+                        return null;
+                    }
+                })[0]
+                ,
                 retweets: retweets.map( retweet => retweet._id),
                 userTweet: {
                     uid: _id,
@@ -208,7 +191,7 @@ const getTweetsFollowing = async (req = request, res = response) => {
                     }
                 })
             }
-
+                   
         });   
         
 
@@ -232,8 +215,9 @@ const getTweetsFollowing = async (req = request, res = response) => {
 
 const getTweetsPopular = async (req = request, res = response) => {
 
-    const {filter, search = '' ,limit = 5, start = 1, end = 5} = req.query;
-
+    const {uid: uid} = req;
+    const {filter, search = '' ,limit = 5, start = 0, end = 5} = req.query;
+    
     
     let objFilter = {}
 
@@ -255,9 +239,19 @@ const getTweetsPopular = async (req = request, res = response) => {
 
     try{
 
-        const tweet = await Tweet.find({ description : { $regex: `${search}` } },null,objFilter)
+        console.log(objFilter);
+
+        const user = await User.findById(uid).select('following')
+
+        const followings = user.following.map( f => {
+            return {
+                _id: f
+            }
+        })
+
+        const tweet = await Tweet.find({ description : { $regex: `${search}` }, showEveryone: true },null,objFilter)
         .populate({
-            path:'userTweet', 
+            path:'userTweet retweets', 
             select: '_id name imgUser'
         })
         .populate({ 
@@ -273,27 +267,39 @@ const getTweetsPopular = async (req = request, res = response) => {
             }  
         }).limit(limit)
 
-
         const tweets = tweet.map( tw => {
+           
+            const { userTweet ,...restTweet } = tw;
+            const { _id: tid, retweets, comentPeople, __v, ...restTweetClean } = restTweet._doc
+            const { _id, ...restUser } = userTweet._doc;
 
-            const { __v,_id: tid, userTweet, comentPeople, ...others } = tw._doc;
-            const {followers, following, _id: uid,...restUser } = userTweet._doc;
-
+          
             return {
                 tid,
+                ...restTweetClean,
+                userRetweet: retweets.map( re => {
+                    if (re._id == uid) {
+                        return 'You Retweeted'
+                    }else if (followings.find(userR => `${userR._id}` == `${re._id}`)) {
+                        return `${re.name} Retweeted`
+                    }else{
+                        return null;
+                    }
+                })[0]
+                ,
+                retweets: retweets.map( retweet => retweet._id),
                 userTweet: {
-                    uid,
+                    uid: _id,
                     ...restUser
                 },
                 comentPeople: comentPeople.map(cmm => {
                     const { ...rest } = cmm
-                    const { _id, ...restClean } = rest._doc
+                    const { _id, __v, ...restClean } = rest._doc
                     return {
                         cid: _id,
                         ...restClean
                     }
-                }),
-                ...others
+                })
             }
         })
 
@@ -316,6 +322,8 @@ const getTweetsPopular = async (req = request, res = response) => {
 }
 
 const getTweetsAndRetweets = async ( req = request, res = response) => {
+    
+    const {limit = 5, start = 0, end = 5} = req.query;
 
     try {
 
@@ -344,7 +352,7 @@ const getTweetsAndRetweets = async ( req = request, res = response) => {
             })
             .limit(10)
         
-        const userRetweets = user.retweets.map(r => {
+        const userRetweets = user.retweets.reverse().slice(start,end).map(r => {
             const {followers, following, __v,...rest} = r.userTweet._doc
             return {
                 ...r._doc,
@@ -445,7 +453,7 @@ const getSearchHashtag = async (req = request, res = response) => {
 
         console.log(hashtags);
 
-        const tweets = hashtags.hashtagTweet.slice(start,end).map( tw => {
+        const tweets = hashtags.hashtagTweet.filter(tw => tw.showEveryone ).slice(start,end).map( tw => {
 
             const { __v,_id: tid, userTweet, comentPeople, ...others } = tw._doc;
             const {followers, following, _id: uid,...restUser } = userTweet._doc;
@@ -511,7 +519,7 @@ const getTweetsSaved = async (req = request, res = response) => {
             }  
         })
 
-        const tweets = tweetsUser.saved.slice(start, end).map(tweet => {
+        const tweets = tweetsUser.saved.reverse().slice(start, end).map(tweet => {
      
             const { _id: tid, __v, comentPeople ,userTweet, ...rest } = tweet._doc;
             const { _id: uid ,...restUser } = userTweet._doc
@@ -536,7 +544,7 @@ const getTweetsSaved = async (req = request, res = response) => {
 
         return res.status(200).json({
             ok: true,
-            data: tweets.reverse()
+            data: tweets
         })
 
     }catch(e){
@@ -574,7 +582,7 @@ const getTweetsLiked = async (req = request, res = response) => {
             }  
         })
 
-        const tweets = tweetsUser.likes.slice(start, end).map(tweet => {
+        const tweets = tweetsUser.likes.reverse().slice(start, end).map(tweet => {
      
             const { _id: tid, __v, comentPeople ,userTweet, ...rest } = tweet._doc;
             const { _id: uid ,...restUser } = userTweet._doc
@@ -600,7 +608,7 @@ const getTweetsLiked = async (req = request, res = response) => {
 
         return res.status(200).json({
             ok: true,
-            data: tweets.reverse()
+            data: tweets
         })
 
     }catch(e){
@@ -612,8 +620,6 @@ const getTweetsLiked = async (req = request, res = response) => {
     }
 
 }
-
-
 
 // await tweets.sort((date1, date2) => date1 - date2);
 
