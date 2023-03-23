@@ -452,6 +452,10 @@ const getSearchHashtag = async (req = request, res = response) => {
         
 
         console.log(hashtags);
+        if(!hashtags.hashtagTweet) return res.status(200).json({
+                                            ok: true,
+                                            data: []
+                                        });
 
         const tweets = hashtags.hashtagTweet.filter(tw => tw.showEveryone ).slice(start,end).map( tw => {
 

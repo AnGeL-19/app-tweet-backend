@@ -104,6 +104,8 @@ const renewToken = async (req = request, res = response) => {
         const token = await generateJWT(id);
 
         const userDB =  await User.findById(id);
+    
+        if (!userDB) return res.status(404).json({ok: false, msg: 'User not found'});
 
         const {followers, following , ...rest} = userDB;
         const { _id: uid, password, __v ,...restdata } = rest._doc

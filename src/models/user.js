@@ -22,11 +22,11 @@ const UserSchema = Schema({
     },
     imgUser:{
         type: String,
-        default: ''
+        default: 'https://res.cloudinary.com/dl9e7nlbu/image/upload/c_scale,h_69/v1679442102/usuario_nq3l93.jpg'
     },
     imgUserBackground:{
         type: String,
-        default: ''
+        default: 'https://www.pixelstalk.net/wp-content/uploads/2016/04/Grey-backgrounds-free-download.jpg'
     },
     loginGoogle: {
         type: Boolean,

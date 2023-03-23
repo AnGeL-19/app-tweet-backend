@@ -6,10 +6,8 @@ const { createTweet,
         addLikeTweet, 
         addRetweetTweet, 
         addSaveTweet, 
-        getTweet,
-        getTweetsByUserId
+        getTweet
     } = require('../controllers/tweetController');
-const { getTweetsFollowing, getTweetsPopular } = require('../controllers/tweetsPeopleController');
 const { validTweetExist, 
         validCommentExist } = require('../helpers/db-validationTweet');
 const { validInputs } = require('../middlewares/validate-inputs');

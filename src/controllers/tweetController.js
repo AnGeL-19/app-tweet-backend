@@ -1,6 +1,5 @@
 const {response, request} = require('express');
 const Tweet = require('../models/tweet');
-const TweetsGlobal = require('../models/tweetsGlobal');
 const User = require('../models/user');
 const Comment = require('../models/comment');
 const Hashtag = require('../models/hashtag');
@@ -10,7 +9,7 @@ const createTweet =  async ( req=request, res= response) => {
     const {description, img, hashtags, privacity} = req.body;
     const {uid} = req;
 
-    console.log(uid,description,img,hashtags);
+    console.log(uid,description,img,hashtags, privacity,'si entra');
 
     try{
 
@@ -25,8 +24,10 @@ const createTweet =  async ( req=request, res= response) => {
 
         console.log(tweet);
 
+        console.log(hashtags, !!hashtags);
+
         if (!!hashtags) {
-            console.log(!!hashtags, 'amonos' );
+            console.log('amonos' );
             
             for (let index = 0; index < hashtags.length; index++) {
             
