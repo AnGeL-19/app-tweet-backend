@@ -480,8 +480,6 @@ const getSearchHashtag = async (req = request, res = response) => {
             }
         })
 
-        // console.log(tweets);
-
         return res.status(200).json({
             ok: true,
             data: tweets
@@ -624,28 +622,6 @@ const getTweetsLiked = async (req = request, res = response) => {
     }
 
 }
-
-// await tweets.sort((date1, date2) => date1 - date2);
-
-// const tweets = await Tweet.where({
-//     $or:[
-//         {
-//             'userTweet':{
-//                 $in: tweetsFollowing.following
-//             }
-//         },
-//         {
-//             'retweets': {
-//                 $in: tweetsFollowing.following
-//             }
-//         }]
-// })
-
-// ({"address.current":{$in:["Jupitor", "Mars"]}});
-// const tweets = await Tweet.find()
-// {path: 'messages', select: '_id from message createdAt messageSpecial', populate: {path: 'from', select: '_id name img'}}
-
-
 
 module.exports = {
 

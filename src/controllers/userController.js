@@ -23,9 +23,6 @@ const getUsers = async (req = request, res) => {
         const users = await User.find({ name : { $regex: `${search}` }, $nor: [{_id: uid }, ...followings] },null,{
             skip: start,
             limit: end,
-            // sort: {
-            //     date: -1
-            // } 
         })
         .select('_id name bio imgUser imgUserBackground followers')
         .limit(limit)
@@ -113,9 +110,6 @@ const updateUser = async (req = request, res) => {
         
         const user = await User.findByIdAndUpdate(uid, objUser, { new: true });
 
-        // const {followers, following, ...rest} = user;
-        // const { _id: uid, ...restdata } = rest._doc
-        console.log(user);
         if(user){
 
             return res.status(200).json({

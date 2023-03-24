@@ -342,8 +342,6 @@ const addMsgTweet = async (req, res) => {
     const {idTweet, comment, img} = req.body;
     const {uid} = req;
 
-    console.log(uid,idTweet,comment);
-
     try {
         
         const newCommet = new Comment({
@@ -383,12 +381,7 @@ const addLikeCommentTweet = async (req, res) => {
 
     try {
         
-        // NOTA: BUSCAR USUARIO QUE YA TIENE LIKE Y ELIMINARLO
         const commentUser = await Comment.findById(idComment).populate();
-
-        // const userLike = await commentUser;
-        console.log(commentUser);
-        // console.log(commentUser.likes);
 
         if(commentUser.likes.includes(uid)){
             console.log("si esta el usuario");
@@ -397,21 +390,18 @@ const addLikeCommentTweet = async (req, res) => {
                 commentUser.updateOne({$pull: {likes: uid}}),
                 commentUser.updateOne({nLikes: disLike})
             ])
-            // PULL SACA DEL ARRAY
-            console.log("eliminado");
 
             return res.status(200).json({
                 ok: true,
                 msg: 'quit liked'
             })
         }else{
-            console.log("no se encuentra el usuario");
+
             const like = commentUser.nLikes + 1; 
             await Promise.all([
                 commentUser.updateOne({$push:{likes: uid}}),
                 commentUser.updateOne({nLikes: like})
             ])
-            console.log("Agregado");
 
             return res.status(200).json({
                 ok: true,
@@ -422,7 +412,7 @@ const addLikeCommentTweet = async (req, res) => {
 
     } catch (e) {
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
