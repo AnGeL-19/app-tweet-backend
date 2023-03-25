@@ -6,7 +6,8 @@ const { createTweet,
         addLikeTweet, 
         addRetweetTweet, 
         addSaveTweet, 
-        getTweet
+        getTweet,
+        getCommentsTweetById
     } = require('../controllers/tweetController');
 const { validTweetExist, 
         validCommentExist } = require('../helpers/db-validationTweet');
@@ -29,6 +30,10 @@ router.post('/', [
 router.get('/:id', [
     validateJWT,
 ] , getTweet );
+
+router.get('/:id/comments', [
+    validateJWT,
+] , getCommentsTweetById );
 
 router.put('/like', [
     validateJWT,

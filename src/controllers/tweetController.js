@@ -420,6 +420,35 @@ const addLikeCommentTweet = async (req, res) => {
 
 }
 
+const getCommentsTweetById = async (req, res) => {
+
+    const {uid} = req;
+    const {id : idTweet} = req.params;
+    const {limit = 5, start = 0, end = 5} = req.query;
+    
+    try {
+        
+        const commets = await Comment.find({tweetComment: idTweet},null,{ 
+            skip: start, // Starting Row
+            limit: end, // Ending Row
+            // sort: { date : -1 } 
+        }).limit(limit);
+
+        return res.status(201).json({
+            ok: true,
+            commets
+        })
+
+
+    } catch (e) {
+        console.log(e);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Error, talk to the admin'
+        });
+    }
+
+}
 
 module.exports = {
     createTweet,
@@ -428,5 +457,6 @@ module.exports = {
     addLikeTweet,
     addRetweetTweet,
     addSaveTweet,
-    getTweet
+    getTweet,
+    getCommentsTweetById
 }
