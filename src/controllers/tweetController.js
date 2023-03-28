@@ -320,7 +320,7 @@ const addSaveTweet = async (req, res) => {
             // PUSH AGREGA UN ELEMENTO AL ARRAY
             console.log("Agregado");
 
-            res.status(200).json({
+            return res.status(200).json({
                 ok: true,
                 msg: 'Saved'
             })
@@ -351,8 +351,15 @@ const addMsgTweet = async (req, res) => {
             imgComment: img
         })
 
+        const tweet = await Tweet.findById(idTweet)
+
+        const nComments = tweet.nComentPeople + 1
+
         await Promise.all([
-            Tweet.findById(idTweet).updateOne({$push:{comentPeople: newCommet._id}}),
+            tweet.updateOne({
+                $push:{comentPeople: newCommet._id}, 
+                nComentPeople: nComments}
+            ),
             newCommet.save()
         ]);        
 
@@ -427,16 +434,26 @@ const getCommentsTweetById = async (req, res) => {
     const {limit = 5, start = 0, end = 5} = req.query;
     
     try {
-        
+        console.log('amonoooos',idTweet, limit, start, end);
         const commets = await Comment.find({tweetComment: idTweet},null,{ 
             skip: start, // Starting Row
             limit: end, // Ending Row
-            // sort: { date : -1 } 
+            sort: { nLikes : -1 },
+            populate: {path: 'userComment', select: '_id imgUser name' }
         }).limit(limit);
+
+        const commentTweetsClean = commets.map(cmm => {
+            const { ...rest } = cmm
+            const { _id, __v, ...restClean } = rest._doc
+            return {
+                cid: _id,
+                ...restClean
+            }
+        })
 
         return res.status(201).json({
             ok: true,
-            commets
+            comments: commentTweetsClean
         })
 
 

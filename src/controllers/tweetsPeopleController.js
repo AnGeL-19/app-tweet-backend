@@ -150,8 +150,8 @@ const getTweetsFollowing = async (req = request, res = response) => {
         .populate({   
             path: 'comentPeople',
             options: { 
-                skip: 1, // Starting Row
-                limit: 3, // Ending Row
+                skip: 0, // Starting Row
+                limit: 1, // Ending Row
                 sort: { nLikes : -1 } 
             },
             populate: {path: 'userComment', select: '_id imgUser name' }
