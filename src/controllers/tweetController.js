@@ -429,12 +429,11 @@ const addLikeCommentTweet = async (req, res) => {
 
 const getCommentsTweetById = async (req, res) => {
 
-    const {uid} = req;
     const {id : idTweet} = req.params;
     const {limit = 5, start = 0, end = 5} = req.query;
     
     try {
-        console.log('amonoooos',idTweet, limit, start, end);
+
         const commets = await Comment.find({tweetComment: idTweet},null,{ 
             skip: start, // Starting Row
             limit: end, // Ending Row

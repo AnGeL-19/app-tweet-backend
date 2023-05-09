@@ -11,7 +11,6 @@ const { dbConnection } = require('../db/configuration');
 
 class Server{
 
-
     constructor(){
 
         this.app = express();
@@ -21,7 +20,9 @@ class Server{
         dbConnection();
 
         // http server
+        
         this.server = http.createServer(this.app);
+        
 
         // configuration sockets
         this.io = socketio( this.server );
@@ -37,13 +38,27 @@ class Server{
 
     }
 
-    middlewares(){
+    corsOptionsDelegate (req, callback) {
+        let allowlist = ['https://app-tweeter-front.vercel.app', 'http://localhost:3000']
 
+        let corsOptions;
+
+        // console.log(allowlist.indexOf(req.header('Origin')) !== -1);
+        // console.log(req.header('Origin'));
+        if (allowlist.indexOf(req.header('Origin')) !== -1) {
+          corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
+        } else {
+          corsOptions = { origin: false } // disable CORS for this request
+        }
+        callback(null, corsOptions) // callback expects two parameters: error and options
+    }
+
+    middlewares(){
         //public
         this.app.use(express.static('public'));
 
         //Cors
-        this.app.use(cors());
+        this.app.use(cors(this.corsOptionsDelegate))
 
         // parse body
         this.app.use( express.json() );
