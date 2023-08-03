@@ -562,7 +562,7 @@ const getTweetsSaved = async (req = request, res = response) => {
 const getTweetsLiked = async (req = request, res = response) => {
 
     const {uid:id} = req;
-    const {limit = 5, start = 1, end = 1} = req.query;
+    const {limit = 5, start = 0, end = 5} = req.query;
     console.log('liked');
 
     try{
