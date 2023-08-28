@@ -1,7 +1,8 @@
 const {Router } = require('express');
 const { check } = require('express-validator');
-const { addFollowAndUnfollow, getUserById, getUsers, getUserFollowers, getUserFollowing, getUsersRecomment, updateUser } = require('../controllers/userController');
+const { addFollowAndUnfollow, getUserById, getUsers, getUserFollowers, getUserFollowing, getUsersRecomment, updateUser, getTweetsByUserId, getTweetsAndRetweets } = require('../controllers/userController');
 const { validateJWT } = require('../middlewares/validate-jwt');
+const { validInputs } = require('../middlewares/validate-inputs');
 
 const router = Router();
 
@@ -25,6 +26,17 @@ router.get('/followers/:id', validateJWT , getUserFollowers  );
 
 router.get('/following/:id', validateJWT , getUserFollowing  );
 
+router.get("/:id/tweets", [validateJWT], getTweetsByUserId);
 
+router.get(
+    "/:id/tweets/retweets",
+    [
+      validateJWT,
+      check("id", "id is not mongoId").isMongoId(),
+      check("id", "id is necesary").notEmpty(),
+      validInputs,
+    ],
+    getTweetsAndRetweets
+  );
 
 module.exports = router;

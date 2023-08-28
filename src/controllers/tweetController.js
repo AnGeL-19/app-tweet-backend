@@ -22,10 +22,6 @@ const createTweet =  async ( req=request, res= response) => {
             showEveryone: privacity
         });
 
-        console.log(tweet);
-
-        console.log(hashtags, !!hashtags);
-
         if (!!hashtags) {
             console.log('amonos' );
             
@@ -67,7 +63,9 @@ const createTweet =  async ( req=request, res= response) => {
             tweet.save()
         ]);
                      
-        return res.status(201).json({
+        return res.status(200).json({
+            ok: true,
+            msg: 'Tweet created success',
             tweet
         });
 
@@ -132,7 +130,7 @@ const getTweet = async (req, res) => {
 
     }catch(e){
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -158,13 +156,10 @@ const addLikeTweet = async (req, res) => {
             User.findById(uid).populate()
         ])
 
-        console.log(tweet.likes);
 
         if(tweet.likes.includes(uid)){
-            console.log("si esta el usuario");
 
             const dislike = tweet.nLikes - 1; 
-            console.log(dislike, "unlike");
 
             await Promise.all([
                 tweet.updateOne({$pull: {likes: uid}}),
@@ -173,10 +168,8 @@ const addLikeTweet = async (req, res) => {
 
             ])
             // PULL SACA DEL ARRAY
-            
-            console.log("eliminado");
 
-            res.status(200).json({
+            return res.status(200).json({
                 ok: true,
                 msg: 'quit liked'
             })
@@ -193,9 +186,8 @@ const addLikeTweet = async (req, res) => {
 
             ])
               // PUSH AGREGA UN ELEMENTO AL ARRAY
-            console.log("Agregado");
 
-            res.status(200).json({
+            return res.status(200).json({
                 ok: true,
                 msg: 'liked'
             })
@@ -224,12 +216,8 @@ const addRetweetTweet = async (req, res) => {
             Tweet.findById(idTweet).populate(),
             User.findById(uid).populate()
         ])
-        
-        console.log(tweet.retweets, "retweets");
-        console.log(user.retweets, "retweets");
 
         if(tweet.retweets.includes(uid)){
-            console.log("si esta el usuario");
 
             const unRetweet = tweet.nRetweets - 1; 
             await Promise.all([
@@ -237,10 +225,8 @@ const addRetweetTweet = async (req, res) => {
                 user.updateOne({$pull: {retweets: idTweet}}),
                 tweet.updateOne({nRetweets: unRetweet})
             ])
-            
-            console.log("eliminado");
 
-            res.status(200).json({
+            return res.status(200).json({
                 ok: true,
                 msg: 'quit Retweet'
             })
@@ -279,8 +265,6 @@ const addSaveTweet = async (req, res) => {
     const {idTweet} = req.body;
     const {uid} = req;
 
-    console.log(uid,idTweet);
-
     try {
         
         const [tweet, user] = await Promise.all([
@@ -288,12 +272,8 @@ const addSaveTweet = async (req, res) => {
             User.findById(uid).populate()
         ])
 
-        console.log(tweet.saved, "saved");
-        console.log(user.saved, "saved");
-        
 
         if(tweet.saved.includes(uid)){
-            console.log("si esta el usuario");
             const unSaved = tweet.nSaved - 1; 
 
             await Promise.all([
@@ -430,18 +410,18 @@ const addLikeCommentTweet = async (req, res) => {
 const getCommentsTweetById = async (req, res) => {
 
     const {id : idTweet} = req.params;
-    const {limit = 5, start = 0, end = 5} = req.query;
+    const {limit = 5, page} = req.query;
     
     try {
 
         const commets = await Comment.find({tweetComment: idTweet},null,{ 
-            skip: start, // Starting Row
-            limit: end, // Ending Row
+            skip: (page - 1) * limit, // Starting Row
+            limit: limit, // Ending Row
             sort: { nLikes : -1 },
             populate: {path: 'userComment', select: '_id imgUser name' }
-        }).limit(limit);
+        })
 
-        const commentTweetsClean = commets.map(cmm => {
+        const commentTweets = commets.map(cmm => {
             const { ...rest } = cmm
             const { _id, __v, ...restClean } = rest._doc
             return {
@@ -452,7 +432,7 @@ const getCommentsTweetById = async (req, res) => {
 
         return res.status(201).json({
             ok: true,
-            comments: commentTweetsClean
+            comments: commentTweets
         })
 
 

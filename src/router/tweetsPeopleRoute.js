@@ -31,17 +31,6 @@ router.get("/liked", [validateJWT], getTweetsLiked);
 
 router.get("/populates", [validateJWT], getTweetsPopular);
 
-router.get(
-  "/retweets/:uid",
-  [
-    validateJWT,
-    check("uid", "id is not mongoId").isMongoId(),
-    check("uid", "id is necesary").notEmpty(),
-    validInputs,
-  ],
-  getTweetsAndRetweets
-);
-
 router.get("/hashtags", [validateJWT], getHashtags);
 
 router.get(
@@ -49,8 +38,6 @@ router.get(
   [validateJWT, validParamHashtag, validInputs],
   getSearchHashtag
 );
-
-router.get("/:id", [validateJWT], getTweetsByUserId);
 
 router.get("/", [validateJWT], getTweetsFollowing);
 

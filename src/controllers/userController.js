@@ -1,14 +1,13 @@
 const {response, request} = require('express');
 const bcrypt = require('bcryptjs');
 
+const Tweet = require('../models/tweet');
 const User = require('../models/user');
 
 const getUsers = async (req = request, res) => {
 
     const {uid} = req;
-    const { search = '', limit = 5, start = 0, end = 5 } = req.query;
-
-    console.log(limit , start , end );
+    const { search = '', limit = 5, page = 1 } = req.query;
 
     try{
 
@@ -20,14 +19,16 @@ const getUsers = async (req = request, res) => {
             }
         })
 
-        const users = await User.find({ name : { $regex: `${search}` }, $nor: [{_id: uid }, ...followings] },null,{
-            skip: start,
-            limit: end,
-        })
-        .select('_id name bio imgUser imgUserBackground followers')
-        .limit(limit)
-        
-        console.log(users);
+        const users = await User.find({ 
+            name : { $regex: `${search}` }, 
+            $nor: [{_id: uid }, ...followings] },
+            null,
+            {
+                skip: (page - 1) * limit,
+                limit: limit,
+            }
+        )
+        .select('_id name bio imgUser imgUserBackground followers')        
 
         return res.status(200).json({
             ok: true,
@@ -114,7 +115,7 @@ const updateUser = async (req = request, res) => {
 
             return res.status(200).json({
                 ok: true,
-                data: 'Update succesful'
+                msg: 'Update succesful'
             })
 
         }else{
@@ -138,26 +139,22 @@ const updateUser = async (req = request, res) => {
 const getUserFollowers = async (req = request, res) => {
 
     const {id} = req.params;
+    const { limit = 5, page = 1 } = req.query;
 
     try{
 
-        const user = await User.findById(id).populate({path:'followers', select: '_id name bio imgUser followers'});
+        const users = await User.find({followers: id}).select('_id name bio imgUser followers')
+                                .skip((page - 1) * limit)
+                                .limit(limit)     
 
-        if(user){
 
-            const { followers, _id, ...rest } = user;
             return res.status(200).json({
                 ok: true,
-                uid: _id,
-                data: followers
+                length: users.length,
+                data: users
             })
 
-        }else{
-            return res.status(204).json({
-                ok: true,
-                msg: 'User not found'
-            })
-        }
+
 
 
     }catch(e){
@@ -173,26 +170,21 @@ const getUserFollowers = async (req = request, res) => {
 const getUserFollowing = async (req = request, res) => {
 
     const {id} = req.params;
+    const { limit = 5, page = 1 } = req.query;
 
     try{
 
-        const user = await User.findById(id).populate({path:'following', select: '_id name bio imgUser followers'});
+        const users = await User.find({following: id}).select('_id name bio imgUser followers')
+                                .skip((page - 1) * limit)
+                                .limit(limit)
+        
 
-        if(user){
-
-            const { following, _id, ...rest } = user;
-            return res.status(200).json({
-                ok: true,
-                uid: _id,
-                data: following
-            })
-
-        }else{
-            return res.status(204).json({
-                ok: true,
-                msg: 'User not found'
-            })
-        }
+        // const { following, _id } = user;
+        return res.status(200).json({
+            ok: true,
+            length: users.length,
+            data: users
+        })
 
 
     }catch(e){
@@ -291,8 +283,169 @@ const getUsersRecomment = async (req = request, res = response) => {
 
 }
 
-module.exports = {
+const getTweetsByUserId = async (req, res) => {
 
+
+    const {id} = req.params;
+    const {limit = 5, page = 1, filter} = req.query;
+    
+    let options;
+
+
+    if (filter === 'likes') {
+        options = (a,b) => b.nLikes - a.nLikes                      
+    }else{
+        options = (a,b) =>  b.date - a.date
+    }
+
+    try{
+
+        const tweetsUser = await Tweet.find({userTweet:id, showEveryone: true})
+        .populate({
+            path: 'userTweet',
+            select: '_id imgUser name followers',
+        })
+        .populate({
+            path: 'comentPeople',
+            options: { 
+                skip: 0, // Starting Row
+                limit: 1, // Ending Row
+                sort: { nLikes : -1 } 
+            },
+            populate: {path: 'userComment', select: '_id imgUser name' }
+        })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        
+
+        const tweets = tweetsUser.reverse().map(tweet => {
+                const { _id: tid, __v, userTweet, comentPeople, ...rest } = tweet._doc;
+                const { followers, _id: uid ,...restUser } = userTweet._doc
+    
+                return{
+                    tid,
+                    ...rest,
+                    userTweet: {
+                        uid,
+                        ...restUser,
+                        followers: followers.length
+                    },
+                    comentPeople: comentPeople.map(cmm => {
+                        const { ...rest } = cmm
+                        const { _id, ...restClean } = rest._doc
+                        return {
+                            cid: _id,
+                            ...restClean
+                        }
+                    })
+                }
+            })
+
+        tweets.sort((a, b) => options(a,b))
+
+        return res.status(200).json({
+            ok: true,
+            length: tweets.length,
+            data: tweets
+        })
+
+    }catch(e){
+        console.log(e);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Error, talk to the admin'
+        });
+    }
+
+
+}
+
+const getTweetsAndRetweets = async ( req = request, res = response) => {
+    
+    const {limit = 5, page = 1} = req.query;
+
+    try {
+
+        const {id} = req.params;
+
+        const tweetsResponse = await Tweet.find()
+                                      .or([{ userTweet: id }, { retweets: id }])
+                                      .populate({
+                                            path: 'userTweet retweets', select: '_id imgUser name'
+                                      })
+                                      .populate(
+                                        {
+                                            path: 'comentPeople',
+                                            options: { 
+                                                skip: 0, // Starting Row
+                                                limit: 1, // Ending Row
+                                                sort: { nLikes : -1 } 
+                                            },
+                                            populate: {path: 'userComment', select: '_id imgUser name' }
+                                        }
+                                      )
+                                      .skip((page - 1) * limit)
+                                      .limit(limit);
+
+
+        const tweetsAndRetweets = tweetsResponse.map( tweet => {
+
+            const { userTweet ,...restTweet } = tweet;
+            const { _id: tid, retweets, comentPeople, __v, ...restTweetClean } = restTweet._doc
+            const { _id, ...restUser } = userTweet._doc;
+
+
+            return {
+                tid,
+                ...restTweetClean,
+                userRetweet: retweets.map( retweet => {
+                    if (retweet._id == id) {
+                        return 'You Retweeted'
+                    }else if (followings.find(userR => `${userR._id}` == `${retweet._id}`)) {
+                        return `${retweet.name} Retweeted`
+                    }else{
+                        return '';
+                    }
+                })[0]
+                ,
+                retweets: retweets.map( retweet => retweet._id),
+                userTweet: {
+                    uid: _id,
+                    ...restUser
+                },
+                comentPeople: comentPeople.map(cmm => {
+                    const { ...rest } = cmm
+                    const { _id, __v, ...restClean } = rest._doc
+                    return {
+                        cid: _id,
+                        ...restClean
+                    }
+                })
+            }
+                   
+        });   
+        
+
+        return res.status(200).json({
+            ok: true,
+            length: tweetsAndRetweets.length,
+            data: tweetsAndRetweets
+        })
+        
+    } catch (e) {
+        console.log(e);
+        return res.status(500).json({
+            ok: false,
+            msg: 'Error, talk to the admin'
+        })
+    }
+
+
+}
+
+module.exports = {
+    getTweetsAndRetweets,
+    getTweetsByUserId,
     updateUser,
     addFollowAndUnfollow,
     getUserById,
