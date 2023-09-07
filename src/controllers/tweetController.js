@@ -6,67 +6,71 @@ const Hashtag = require('../models/hashtag');
 
 const createTweet =  async ( req=request, res= response) => {
 
-    const {description, img, hashtags, privacity} = req.body;
+    const {description, hashtags, privacity, img} = req.body;
+
     const {uid} = req;
 
-    console.log(uid,description,img,hashtags, privacity,'si entra');
+    console.log(uid, description, hashtags, privacity,'si entra');
 
     try{
+        
 
-        let hashtag;
 
         const tweet = new Tweet({
             userTweet: uid,
             description,
-            imgTweet: img, 
+            imgTweet: img,
             showEveryone: privacity
         });
 
-        if (!!hashtags) {
-            console.log('amonos' );
-            
-            for (let index = 0; index < hashtags.length; index++) {
-            
-                const ht = await Hashtag.findOne({nameHashtag: hashtags[index]})
-    
-                if(hashtags[index]){
-                    if (!ht) {
-                        hashtag = new Hashtag({
-                            nameHashtag: hashtags[index],
-                            tweet: tweet._id 
-                        }); 
 
-                        hashtag.hashtagTweet.push(tweet._id);
-                        
-                        console.log(hashtag);
+        if (hashtags) {
+            
+            await hashtags.forEach( async (hashtag) => {
 
-                        await hashtag.save()
-                        tweet.hashtagsTweet.push(hashtag._id); 
-        
-                        console.log(tweet);
-                        
-                    }else{
-                        const tweets = ht.nTweets + 1;
-        
-                        await Promise.all([
-                            ht.updateOne({$push:{hashtagTweet: tweet._id}}),
-                            ht.updateOne({nTweets: tweets})
-                        ])
-                    }    
-                }
+                const ht = await Hashtag.findOne({nameHashtag: hashtag})
+
+                if (!ht) {
+                    const createHashtag = new Hashtag({
+                        nameHashtag: hashtag,
+                        tweet: tweet._id 
+                    }); 
+
+                    createHashtag.hashtagTweet.push(tweet._id);
+                    tweet.hashtagsTweet.push(createHashtag._id); 
+
+                    await createHashtag.save()
+
+                }else{
+                    const numTweets = ht.nTweets + 1;
+                    tweet.hashtagsTweet.push(ht._id)
+
+                    
+                    await Promise.all([
+                        ht.updateOne({$push:{hashtagTweet: tweet._id}}),
+                        ht.updateOne({nTweets: numTweets}), 
+                    ])
+
+                }    
                 
-            } 
+            });
+
+            await tweet.save()
+            await Tweet.findById(tweet._id).updateOne({$push:{hashtagsTweet: tweet.hashtagsTweet}})
+
+        }else{
+            await tweet.save()
         }
-        
+
         await Promise.all([
-            User.findById(uid).updateOne({$push:{posts: tweet._id}}),
-            tweet.save()
-        ]);
-                     
+            User.findById(uid).updateOne({$push:{posts: tweet._id}})
+        ])
+        console.log(tweet);
+
         return res.status(200).json({
             ok: true,
             msg: 'Tweet created success',
-            tweet
+            // tweet
         });
 
     }catch(e){

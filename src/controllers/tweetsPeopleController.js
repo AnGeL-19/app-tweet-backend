@@ -239,39 +239,34 @@ const getHashtags = async (req = request, res = response) => {
 
 const getSearchHashtag = async (req = request, res = response) => {
 
-    const {hashtag, limit = 5, start = 0, end = 5} = req.query;
+    const {hashtag, limit = 5, page = 1} = req.query;
     console.log(hashtag);
 
     try {
         
-        const hashtags = await Hashtag.findOne({nameHashtag: hashtag })
+        
+        const hashtagResponse = await Hashtag.findOne({ nameHashtag: hashtag })
+        console.log(hashtagResponse);
+         
+        const tweetHastags = await Tweet.find({hashtagsTweet: hashtagResponse._id, showEveryone: true},null,{
+            skip: (page - 1) * limit, // Starting Row
+            limit: limit, // Ending Row
+        })
         .populate({
-            path: 'hashtagTweet', 
-            populate: {
-                path: 'userTweet', select: '_id imgUser name'
-            }
+            path: 'userTweet', select: '_id imgUser name'
         })
         .populate({ 
-            path: 'hashtagTweet', 
-            populate: {
-                path: 'comentPeople',
-                options: { 
-                    skip: 0, // Starting Row
-                    limit: 3, // Ending Row
-                    sort: { nLikes : -1 } 
-                },
-                populate: {path: 'userComment', select: '_id imgUser name' } 
-            } 
+            path: 'comentPeople',
+            options: { 
+                skip: 0, // Starting Row
+                limit: 1, // Ending Row
+                sort: { nLikes : -1 } 
+            },
+            populate: {path: 'userComment', select: '_id imgUser name' } 
         })
-        
+        console.log(tweetHastags);
 
-        console.log(hashtags);
-        if(!hashtags.hashtagTweet) return res.status(200).json({
-                                            ok: true,
-                                            data: []
-                                        });
-
-        const tweets = hashtags.hashtagTweet.filter(tw => tw.showEveryone ).slice(start,end).map( tw => {
+        const tweets = tweetHastags.map( tw => {
 
             const { __v,_id: tid, userTweet, comentPeople, ...others } = tw._doc;
             const {followers, following, _id: uid,...restUser } = userTweet._doc;

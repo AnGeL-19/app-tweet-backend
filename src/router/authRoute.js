@@ -3,8 +3,7 @@ const { check } = require('express-validator');
 const { 
     createUser, 
     loginUser, 
-    renewToken, 
-    googleSignIn 
+    renewToken
 } = require('../controllers/authController');
 const { existEmail } = require('../helpers/db-validationUser');
 const { validInputs, validLoginUser } = require('../middlewares/validate-inputs');
@@ -33,13 +32,6 @@ router.post('/', [
     validInputs,
     validLoginUser
 ] , loginUser );
-
-router.post('/google',[
-    check('id_token','id_token is necessary').notEmpty(),
-    validInputs
-],googleSignIn );
-
-
 
 
 module.exports = router;

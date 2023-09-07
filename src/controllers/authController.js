@@ -2,7 +2,6 @@ const {response, request} = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const { generateJWT } = require('../helpers/jwt');
-const { googleVerify } = require('../helpers/google-verify');
 
 const createUser =  async ( req=request, res= response) => {
 
@@ -131,75 +130,10 @@ const renewToken = async (req = request, res = response) => {
 
 }
 
-const googleSignIn = async (req=request, res= response) => {
-
-    const { id_token } = req.body;
-
-    try {
-        
-        const { email, name, picture } = await googleVerify(id_token);
-
-        const user = await User.findOne({email});
-
-        if(!user){
-
-            const data = {
-                email, 
-                name, 
-                imgUser: picture,
-                password: '<dev>', 
-                loginGoogle: true
-            }
-            const newUser = new User(data);
-
-            const salt = bcrypt.genSaltSync();
-            newUser.password = bcrypt.hashSync(data.password, salt);
-
-            await newUser.save();
-
-            const token = await generateJWT(newUser.id)
-
-            res.status(200).json({
-                ok: true,
-                user:newUser,
-                token
-            })
-
-        }else{
-           
-            if(user.loginGoogle){
-                const token = await generateJWT(user.id)
-                res.status(200).json({
-                    ok: true,
-                    user,
-                    token
-                })
-            }else{
-                res.status(401).json({
-                    ok: false,
-                    msg: 'error. User not logged in Google account',             
-                })
-            }
-            
-        }
-
-    } catch (error) {
-        console.log(error);
-        res.status(400).json({
-            ok: false,
-            msg: 'error signing in. The token could not be verified'
-        })
-
-    }
-
-    
-
-}
 
 
 module.exports = {
     createUser,
     loginUser,
     renewToken,
-    googleSignIn
 }
