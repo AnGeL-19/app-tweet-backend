@@ -335,7 +335,13 @@ const addMsgTweet = async (req, res) => {
             imgComment: img
         })
 
-        const tweet = await Tweet.findById(idTweet)
+        const [tweet,user] = await Promise.all([
+            Tweet.findById(idTweet), 
+            User.findById(uid)
+        ]); 
+
+     
+       
 
         const nComments = tweet.nComentPeople + 1
 
@@ -347,15 +353,31 @@ const addMsgTweet = async (req, res) => {
             newCommet.save()
         ]);        
 
+        const { userComment, ...rest } = newCommet
+        const { _id, __v, ...restDoc } = rest._doc
+
+        const newCmmt = {
+            cid: _id,
+            ...restDoc,
+            userComment: {
+                uid: user._id,
+                name: user.name,
+                imgUser: user.imgUser
+            }
+        }
+
+        console.log(tweet, user);
+        
+
         return res.status(201).json({
             ok: true,
-            newCommet
+            comment: newCmmt
         })
 
 
     } catch (e) {
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
