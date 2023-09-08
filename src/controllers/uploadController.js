@@ -1,4 +1,5 @@
 const {response, request} = require('express');
+const User = require('../models/user');
 
 const cloudinary = require('cloudinary').v2
 cloudinary.config( process.env.CLOUDINARY_URL );
@@ -9,16 +10,41 @@ const uploadImageCloudinary = async ( req=request, res= response ) => {
 
         const { tempFilePath }  = req.files.fileImage;
 
-        // if(modelImage){
-        //     // hay que borrar la imagen del servidor cloudinary
+        console.log(tempFilePath, 'entrooooo uploadImageCloudinary' );
 
-        //     const splitName =  modelo.img.split('/');
-        //     const name = splitName[splitName.length - 1];
-        //     const [ public_id ] = name.split('.');
+        const {secure_url} = await cloudinary.uploader.upload(tempFilePath);
 
-        //     cloudinary.uploader.destroy(public_id);
+        return res.status(200).json({
+            ok: true,
+            url: secure_url
+        });
+    
+    }catch(err){
+        console.log(err);
+        console.log('Error upload image');
+        return res.status(500).json({
+            ok: true,
+            msg: 'Error upload image'
+        });
+    }
+    
+}
+
+const uploadImageCloudinaryUpdate = async ( req=request, res= response ) => {
+
+    const { public_id } = req.params;
+
+
+    try{
+
+        const { tempFilePath }  = req.files.fileImage;
+
+        if(public_id){
+            // hay que borrar la imagen del servidor cloudinary
+
+            cloudinary.uploader.destroy(public_id);
             
-        // }
+        }
 
         console.log(tempFilePath, 'entrooooo uploadImageCloudinary' );
 
@@ -41,5 +67,6 @@ const uploadImageCloudinary = async ( req=request, res= response ) => {
 }
 
 module.exports = {
-    uploadImageCloudinary
+    uploadImageCloudinary,
+    uploadImageCloudinaryUpdate
 }
