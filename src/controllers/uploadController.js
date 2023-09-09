@@ -42,6 +42,7 @@ const uploadImageCloudinaryUpdate = async ( req=request, res= response ) => {
         if(public_id){
             // hay que borrar la imagen del servidor cloudinary
 
+            console.log(public_id);
             cloudinary.uploader.destroy(public_id);
             
         }
