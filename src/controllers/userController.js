@@ -289,18 +289,29 @@ const getTweetsByUserId = async (req, res) => {
     const {id} = req.params;
     const {limit = 5, page = 1, filter} = req.query;
     
-    let options;
+    let objFilter;
 
-
-    if (filter === 'likes') {
-        options = (a,b) => b.nLikes - a.nLikes                      
+    if (filter==='likes') {
+        objFilter={
+            sort: { nLikes: -1 }
+        }
     }else{
-        options = (a,b) =>  b.date - a.date
+        objFilter={
+            sort: {
+                date: -1
+            } 
+        }
     }
 
     try{
 
-        const tweetsUser = await Tweet.find({userTweet:id, showEveryone: true})
+        const tweetsUser = await Tweet.find({userTweet:id, showEveryone: true},
+            null,
+            {
+                skip: (page - 1) * limit,
+                limit: limit,
+                ...objFilter
+        })
         .populate({
             path: 'userTweet',
             select: '_id imgUser name followers',
@@ -314,11 +325,9 @@ const getTweetsByUserId = async (req, res) => {
             },
             populate: {path: 'userComment', select: '_id imgUser name' }
         })
-        .skip((page - 1) * limit)
-        .limit(limit)
         
 
-        const tweets = tweetsUser.reverse().map(tweet => {
+        const tweets = tweetsUser.map(tweet => {
                 const { _id: tid, __v, userTweet, comentPeople, ...rest } = tweet._doc;
                 const { followers, _id: uid ,...restUser } = userTweet._doc
     
@@ -340,8 +349,6 @@ const getTweetsByUserId = async (req, res) => {
                     })
                 }
             })
-
-        tweets.sort((a, b) => options(a,b))
 
         return res.status(200).json({
             ok: true,
