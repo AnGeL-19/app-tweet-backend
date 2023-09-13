@@ -97,24 +97,20 @@ const getTweetsFollowing = async (req = request, res = response) => {
 
 }
 
-const getTweetsPopular = async (req = request, res = response) => {
+const getTweetsExplore = async (req = request, res = response) => {
 
-    const {uid: uid} = req;
-    const {filter, search = '' ,limit = 5, page} = req.query;
+    const {uid} = req;
+    const {filter='', hashtag='', search = '', limit = 5, page = 1} = req.query;
     
     
     let objFilter = {}
 
     if (filter==='top') {
         objFilter={
-            skip: (page - 1) * limit,
-            limit: limit,
             sort: { nLikes: -1 }
         }
     }else{
         objFilter={
-            skip: (page - 1) * limit,
-            limit: limit,
             sort: {
                 date: -1
             } 
@@ -123,7 +119,11 @@ const getTweetsPopular = async (req = request, res = response) => {
 
     try{
 
-        const user = await User.findById(uid).select('following')
+        const [ user, hashtagResponse ] = await Promise.all([
+            User.findById(uid).select('following'),
+            Hashtag.findOne({ nameHashtag: `#${hashtag}` })
+        ])
+
 
         const followings = user.following.map( f => {
             return {
@@ -131,7 +131,24 @@ const getTweetsPopular = async (req = request, res = response) => {
             }
         })
 
-        const tweetResponse = await Tweet.find({ description : { $regex: `${search}` }, showEveryone: true },null,objFilter)
+        let hashtagsObj = {}
+        if(hashtagResponse){
+            hashtagsObj = {
+                hashtagsTweet: hashtagResponse._id 
+            }
+        }
+
+        const tweetResponse = await Tweet.find({ 
+                description : { $regex: `${search}` }, 
+                showEveryone: true,
+                ...hashtagsObj
+            },
+            null,
+            {
+                skip: (page - 1) * limit,
+                limit: limit,
+                ...objFilter
+            })
         .populate({
             path:'userTweet retweets', 
             select: '_id name imgUser'
@@ -439,7 +456,7 @@ const getTweetsLiked = async (req = request, res = response) => {
 module.exports = {
 
     getTweetsFollowing,
-    getTweetsPopular,
+    getTweetsExplore,
    
     getHashtags,
     getSearchHashtag,

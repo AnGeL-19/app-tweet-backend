@@ -3,7 +3,7 @@ const { check } = require("express-validator");
 
 const {
   getTweetsFollowing,
-  getTweetsPopular,
+  getTweetsExplore,
   getTweetsAndRetweets,
   getHashtags,
   getSearchHashtag,
@@ -29,15 +29,9 @@ router.get("/saved", [validateJWT], getTweetsSaved);
 
 router.get("/liked", [validateJWT], getTweetsLiked);
 
-router.get("/populates", [validateJWT], getTweetsPopular);
+router.get("/explore", [validateJWT], getTweetsExplore);
 
 router.get("/hashtags", [validateJWT], getHashtags);
-
-router.get(
-  "/hashtag/search",
-  [validateJWT, validParamHashtag, validInputs],
-  getSearchHashtag
-);
 
 router.get("/", [validateJWT], getTweetsFollowing);
 
