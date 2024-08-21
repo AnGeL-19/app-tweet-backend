@@ -16,7 +16,7 @@ router.get('/renew', [
     validateJWT
 ],renewToken);
 
-router.post('/new', [
+router.post('/register', [
     check('name', 'name is necessary').notEmpty(),
     check('email', 'email is necessary').notEmpty(),
     check('email', 'this is not an email').isEmail(),
@@ -25,7 +25,7 @@ router.post('/new', [
     validInputs
 ] ,createUser );
 
-router.post('/', [
+router.post('/login', [
     check('email', 'email is necessary').notEmpty(),
     check('email', 'this is not an email').isEmail(),
     check('password', 'password is necessary').notEmpty(),

@@ -76,7 +76,7 @@ class Server{
 
     routers(){
         // path api
-        this.app.use('/api/login', require('../router/authRoute'));
+        this.app.use('/api/auth', require('../router/authRoute'));
         this.app.use('/api/tweet', require('../router/tweetsRoute'));
         this.app.use('/api/user', require('../router/userRoute'));
         this.app.use('/api/tweets', require('../router/tweetsPeopleRoute'));
