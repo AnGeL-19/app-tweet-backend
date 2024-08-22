@@ -39,7 +39,7 @@ class Server{
     }
 
     corsOptionsDelegate (req, callback) {
-        let allowlist = ['https://app-tweeter-front.vercel.app', 'http://localhost:3000']
+        let allowlist = ['https://app-tweeter-front.vercel.app', 'http://localhost:5173']
 
         let corsOptions;
 
