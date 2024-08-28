@@ -10,7 +10,7 @@ const Hashtag = require('../models/hashtag');
 const getTweetsFollowing = async (req = request, res = response) => {
 
     try{
-        const {uid} = req;
+        const { uid } = req.uid;
 
         const {limit = 5, page = 1} = req.query;
 
@@ -22,8 +22,15 @@ const getTweetsFollowing = async (req = request, res = response) => {
             }
         })
 
-        const tweetsFollowing = await Tweet.find({userTweet: {$in: [...followings]}, showEveryone: true},null,{ 
-            skip: (page - 1) * limit, // Starting Row
+        const tweetsFollowing = await Tweet.find({
+                userTweet: {
+                    $in: [...followings]
+                }, 
+                showEveryone: true
+            },
+            null,
+            { 
+            skip: page * limit, // Starting Row
             limit: limit, // Ending Row
             sort: { date : -1 } 
         })
@@ -99,8 +106,8 @@ const getTweetsFollowing = async (req = request, res = response) => {
 
 const getTweetsExplore = async (req = request, res = response) => {
 
-    const {uid} = req;
-    const {filter='', hashtag='', search = '', limit = 5, page = 1} = req.query;
+    const {uid} = req.uid;
+    const {filter='', search = '', limit = 5, page = 1} = req.query;
     
     
     let objFilter = {}
@@ -118,6 +125,8 @@ const getTweetsExplore = async (req = request, res = response) => {
     }
 
     try{
+
+        const hashtag = search.split('#')[0] || ''
 
         const [ user, hashtagResponse ] = await Promise.all([
             User.findById(uid).select('following'),

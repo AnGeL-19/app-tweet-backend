@@ -138,23 +138,39 @@ const updateUser = async (req = request, res) => {
 
 const getUserFollowers = async (req = request, res) => {
 
-    const {id} = req.params;
+    const { id } = req.params;
+    const { uid } = req.uid;
     const { limit = 5, page = 1 } = req.query;
 
     try{
 
-        const users = await User.find({followers: id}).select('_id name bio imgUser followers')
+        const users = await User.find({following: id}).select('_id name bio imgUser followers')
                                 .skip((page - 1) * limit)
                                 .limit(limit)     
 
 
-            return res.status(200).json({
-                ok: true,
-                length: users.length,
-                data: users
-            })
+        const mappingUser = users.map( (user) => {
+
+            const { ...rest } = user;
+            const { _id, followers, ...restDoc } = rest._doc;
+
+            let isFollowing = (_id.toString() === uid) || followers.includes(uid);
+
+            return {
+                uid: _id,
+                ...restDoc,
+                nfollowers: followers.length,
+                isFollowing
+            }
+        });
 
 
+        return res.status(200).json({
+            ok: true,
+            length: mappingUser.length,
+            data: mappingUser
+        })
+                        
 
 
     }catch(e){
@@ -169,21 +185,37 @@ const getUserFollowers = async (req = request, res) => {
 
 const getUserFollowing = async (req = request, res) => {
 
-    const {id} = req.params;
+    const { uid } = req.uid;
+    const { id } = req.params;
     const { limit = 5, page = 1 } = req.query;
 
     try{
-
-        const users = await User.find({following: id}).select('_id name bio imgUser followers')
+        
+        const users = await User.find({followers: id}).select('_id name bio imgUser followers')
                                 .skip((page - 1) * limit)
                                 .limit(limit)
         
 
-        // const { following, _id } = user;
+        const mappingUser = users.map( (user) => {
+
+            const { ...rest } = user;
+            const { _id, followers, ...restDoc } = rest._doc;
+
+            let isFollowing = (_id.toString() === uid) || followers.includes(uid);
+            
+            return {
+                uid: _id,
+                ...restDoc,
+                nfollowers: followers.length,
+                isFollowing
+            }
+        });
+
+
         return res.status(200).json({
             ok: true,
-            length: users.length,
-            data: users
+            length: mappingUser.length,
+            data: mappingUser
         })
 
 
@@ -201,7 +233,7 @@ const addFollowAndUnfollow = async (req, res) => {
 
 
     const {id} = req.params;
-    const {uid} = req;
+    const {uid} = req.uid;
 
     try{
         
@@ -223,7 +255,8 @@ const addFollowAndUnfollow = async (req, res) => {
             ]);
             return res.status(200).json({
                 ok:true,
-                msg: 'Unfollow'
+                msg: 'Unfollow',
+                follow: false
             })
         }else{
             await Promise.all([
@@ -232,7 +265,8 @@ const addFollowAndUnfollow = async (req, res) => {
             ]);
             return res.status(200).json({
                 ok:true,
-                msg: 'Following'
+                msg: 'Following',
+                follow: true
             })
         }       
 
@@ -251,7 +285,7 @@ const addFollowAndUnfollow = async (req, res) => {
 
 const getUsersRecomment = async (req = request, res = response) => {
 
-    const {uid} = req;
+    const {uid} = req.uid;
 
     try {
 
@@ -286,69 +320,119 @@ const getUsersRecomment = async (req = request, res = response) => {
 const getTweetsByUserId = async (req, res) => {
 
 
-    const {id} = req.params;
-    const {limit = 5, page = 1, filter} = req.query;
+    const { id } = req.params;
+    const { limit = 5, page = 1, filter } = req.query;
     
     let objFilter;
+    let tweetOptions;
 
     if (filter==='likes') {
         objFilter={
             sort: { nLikes: -1 }
         }
-    }else{
+        tweetOptions = {
+            userTweet:id,
+            showEveryone: true
+        }
+    }else if(filter === 'tweets'){
         objFilter={
             sort: {
                 date: -1
             } 
         }
+        tweetOptions = { 
+            userTweet: id, 
+            showEveryone: true 
+        }
+    }else if(filter === 'tweets&replies'){
+        objFilter={
+            sort: {
+                date: -1
+            } 
+        }
+        tweetOptions = { 
+            userTweet: id, 
+            retweets: id, 
+            showEveryone: true 
+        }
+    }else{
+        objFilter={}
+        tweetOptions = { 
+            userTweet: id, 
+            showEveryone: true
+        }
     }
+
+    console.log(objFilter, tweetOptions);
+    
 
     try{
 
-        const tweetsUser = await Tweet.find({userTweet:id, showEveryone: true},
-            null,
-            {
-                skip: (page - 1) * limit,
-                limit: limit,
-                ...objFilter
+        const tweetsResponse = await Tweet.find({
+            ...tweetOptions
+        },
+        null,
+        {
+            // ...objFilter
         })
+        // .or([{ userTweet:id },{ retweets: id }])
         .populate({
-            path: 'userTweet',
-            select: '_id imgUser name followers',
+              path: 'userTweet retweets', select: '_id imgUser name'
         })
-        .populate({
-            path: 'comentPeople',
-            options: { 
-                skip: 0, // Starting Row
-                limit: 1, // Ending Row
-                sort: { nLikes : -1 } 
-            },
-            populate: {path: 'userComment', select: '_id imgUser name' }
-        })
+        .populate(
+          {
+              path: 'comentPeople',
+              options: { 
+                  skip: 0, // Starting Row
+                  limit: 1, // Ending Row
+                  sort: { nLikes : -1 } 
+              },
+              populate: {path: 'userComment', select: '_id imgUser name' }
+          }
+        )
+        .skip( (page - 1)   * limit)
+        .limit(limit);
+
+        console.log(tweetsResponse);
         
 
-        const tweets = tweetsUser.map(tweet => {
-                const { _id: tid, __v, userTweet, comentPeople, ...rest } = tweet._doc;
-                const { followers, _id: uid ,...restUser } = userTweet._doc
-    
-                return{
-                    tid,
-                    ...rest,
-                    userTweet: {
-                        uid,
-                        ...restUser,
-                        followers: followers.length
-                    },
-                    comentPeople: comentPeople.map(cmm => {
-                        const { ...rest } = cmm
-                        const { _id, ...restClean } = rest._doc
-                        return {
-                            cid: _id,
-                            ...restClean
-                        }
-                    })
-                }
-            })
+        const tweets = tweetsResponse.map( tweet => {
+
+            const { userTweet ,...restTweet } = tweet;
+            const { _id: tid, retweets, comentPeople, __v, ...restTweetClean } = restTweet._doc
+            const { _id, ...restUser } = userTweet._doc;
+
+
+            return {
+                tid,
+                ...restTweetClean,
+                userRetweet: retweets.map( retweet => {
+                    if (retweet._id == id) {
+                        return 'You Retweeted'
+                    }else if (followings.find(userR => `${userR._id}` == `${retweet._id}`)) {
+                        return `${retweet.name} Retweeted`
+                    }else{
+                        return '';
+                    }
+                })[0]
+                ,
+                retweets: retweets.map( retweet => retweet._id),
+                userTweet: {
+                    uid: _id,
+                    ...restUser
+                },
+                comentPeople: comentPeople.map(cmm => {
+                    const { ...rest } = cmm
+                    const { _id, __v, ...restClean } = rest._doc
+                    return {
+                        cid: _id,
+                        ...restClean
+                    }
+                })
+            }
+                   
+        });   
+        
 
         return res.status(200).json({
             ok: true,

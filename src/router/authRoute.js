@@ -3,7 +3,8 @@ const { check } = require('express-validator');
 const { 
     createUser, 
     loginUser, 
-    renewToken
+    checkToken,
+    logout
 } = require('../controllers/authController');
 const { existEmail } = require('../helpers/db-validationUser');
 const { validInputs, validLoginUser } = require('../middlewares/validate-inputs');
@@ -12,9 +13,9 @@ const { validateJWT } = require('../middlewares/validate-jwt');
 const router = Router();
 
 
-router.get('/renew', [
+router.get('/check-auth', [
     validateJWT
-],renewToken);
+], checkToken);
 
 router.post('/register', [
     check('name', 'name is necessary').notEmpty(),
@@ -33,5 +34,8 @@ router.post('/login', [
     validLoginUser
 ] , loginUser );
 
+router.post('/logout', [
+    validateJWT
+],logout);
 
 module.exports = router;

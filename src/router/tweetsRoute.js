@@ -21,9 +21,9 @@ router.post('/', [
     validateJWT,
     check('description','description is necessary').notEmpty(),
     check('description','description is not string').isString(),
-    check('hashtags','hashtags is not string').isArray().optional(),
+    check('hashtags','hashtags is not array').isArray().optional(),
     check('img','img is not string').isString().optional(),
-    check('privacity','img is not string').isBoolean().optional(), 
+    check('privacity','privacity is not boolean').isBoolean().optional(), 
     validInputs
 ] , createTweet );
 

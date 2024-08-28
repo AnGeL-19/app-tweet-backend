@@ -1,7 +1,8 @@
 const {response, request} = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
-const { generateJWT } = require('../helpers/jwt');
+const { generateJWT, checkJWT } = require('../helpers/jwt');
+
 
 const createUser =  async ( req=request, res= response) => {
 
@@ -28,6 +29,13 @@ const createUser =  async ( req=request, res= response) => {
 
         // generate JWT
         const token = await generateJWT(user.id);
+
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: true, // Asegúrate de estar usando HTTPS
+            sameSite: 'Strict',
+            maxAge: 24 * 60 * 60 * 1000 // Expira en 1 día
+        });
 
         return res.status(200).json({
             ok: true,
@@ -74,6 +82,13 @@ const loginUser =  async ( req=request, res= response) => {
         // generate JWT
         const token = await generateJWT(user.id);
 
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: true, // Asegúrate de estar usando HTTPS
+            sameSite: 'Strict',
+            maxAge: 24 * 60 * 60 * 1000 // Expira en 1 día
+        });
+
         return res.status(200).json({
             ok: true,
             data: {
@@ -95,19 +110,20 @@ const loginUser =  async ( req=request, res= response) => {
 
 }
 
-const renewToken = async (req = request, res = response) => {
+const checkToken = async (req = request, res = response) => {
 
-    const { uid: id } = req;
+    const { uid: id } = req.uid
 
     try{
-        const token = await generateJWT(id);
-
+        
         const userDB =  await User.findById(id);
     
         if (!userDB) return res.status(404).json({ok: false, msg: 'User not found'});
 
         const {followers, following , ...rest} = userDB;
         const { _id: uid, password, __v ,...restdata } = rest._doc
+
+        const token = req.cookies.token;
         
         return res.status(200).json({
             ok: true,
@@ -130,10 +146,32 @@ const renewToken = async (req = request, res = response) => {
 
 }
 
+const logout = async (req = request, res = response) => {
+
+    try{
+
+        res.clearCookie('token');
+        
+        return res.status(200).json({
+            ok: true,
+            msg: 'Logout successful'
+        });
+
+    }catch(err){
+        console.log(err);
+        res.status(404).json({
+            ok: false,
+            msg: 'error logout token'
+        });
+    }    
+
+}
+
 
 
 module.exports = {
     createUser,
     loginUser,
-    renewToken,
+    checkToken,
+    logout
 }

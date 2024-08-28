@@ -13,13 +13,9 @@ const {
 } = require("../controllers/tweetsPeopleController");
 
 const {
-  validTweetExist,
-  validCommentExist,
 } = require("../helpers/db-validationTweet");
 
 const {
-  validInputs,
-  validParamHashtag,
 } = require("../middlewares/validate-inputs");
 const { validateJWT } = require("../middlewares/validate-jwt");
 
@@ -31,7 +27,7 @@ router.get("/liked", [validateJWT], getTweetsLiked);
 
 router.get("/explore", [validateJWT], getTweetsExplore);
 
-router.get("/hashtags", [validateJWT], getHashtags);
+router.get("/trends", [validateJWT], getHashtags);
 
 router.get("/", [validateJWT], getTweetsFollowing);
 

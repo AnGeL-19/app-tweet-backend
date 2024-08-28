@@ -10,7 +10,7 @@ router.put('/edit',[
     validateJWT,
 ], updateUser )
 
-router.put('/followUnfollow/:id', [
+router.patch('/followUnfollow/:id', [
     validateJWT
 ] , addFollowAndUnfollow  );
 

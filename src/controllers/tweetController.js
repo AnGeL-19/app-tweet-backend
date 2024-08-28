@@ -8,7 +8,7 @@ const createTweet =  async ( req=request, res= response) => {
 
     const {description, hashtags, privacity, img} = req.body;
 
-    const {uid} = req;
+    const { uid } = req.uid;
 
     console.log(uid, description, hashtags, privacity,'si entra');
 
@@ -16,7 +16,7 @@ const createTweet =  async ( req=request, res= response) => {
         
 
 
-        const tweet = new Tweet({
+        const newTweet = new Tweet({
             userTweet: uid,
             description,
             imgTweet: img,
@@ -33,21 +33,21 @@ const createTweet =  async ( req=request, res= response) => {
                 if (!ht) {
                     const createHashtag = new Hashtag({
                         nameHashtag: hashtag,
-                        tweet: tweet._id 
+                        tweet: newTweet._id 
                     }); 
 
-                    createHashtag.hashtagTweet.push(tweet._id);
+                    createHashtag.hashtagTweet.push(newTweet._id);
                     tweet.hashtagsTweet.push(createHashtag._id); 
 
                     await createHashtag.save()
 
                 }else{
                     const numTweets = ht.nTweets + 1;
-                    tweet.hashtagsTweet.push(ht._id)
+                    newTweet.hashtagsTweet.push(ht._id)
 
                     
                     await Promise.all([
-                        ht.updateOne({$push:{hashtagTweet: tweet._id}}),
+                        ht.updateOne({$push:{hashtagTweet: newTweet._id}}),
                         ht.updateOne({nTweets: numTweets}), 
                     ])
 
@@ -55,22 +55,38 @@ const createTweet =  async ( req=request, res= response) => {
                 
             });
 
-            await tweet.save()
-            await Tweet.findById(tweet._id).updateOne({$push:{hashtagsTweet: tweet.hashtagsTweet}})
+            await newTweet.save()
+            await Tweet.findById(newTweet._id).updateOne({$push:{hashtagsTweet: newTweet.hashtagsTweet}})
 
         }else{
-            await tweet.save()
+            await newTweet.save()
         }
 
-        await Promise.all([
-            User.findById(uid).updateOne({$push:{posts: tweet._id}})
-        ])
-        console.log(tweet);
+        await User.findById(uid).updateOne({$push:{posts: newTweet._id}})
+        
+        const tweet = await Tweet.findById(newTweet._id).populate({
+            path:'userTweet retweets', 
+            select: '_id name imgUser'
+        })
+
+        const { userTweet ,...restTweet } = tweet;
+        const { _id: tid, retweets, comentPeople, __v, ...restTweetClean } = restTweet._doc
+        const { _id, ...restUser } = userTweet._doc;
+
+        const formatTweet = {
+            tid,
+            ...restTweetClean,
+            userRetweet: '',
+            userTweet: {
+                uid: _id,
+                ...restUser
+            }
+        }
 
         return res.status(200).json({
             ok: true,
             msg: 'Tweet created success',
-            // tweet
+            tweet: formatTweet
         });
 
     }catch(e){

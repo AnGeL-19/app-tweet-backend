@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketio = require('socket.io');
 const cors =  require('cors');
+var cookieParser = require('cookie-parser')
 // const Sockets = require('./sockets');
 
 // const { dbConnection } = require('../database/config');
@@ -10,6 +11,8 @@ const { dbConnection } = require('../db/configuration');
 
 
 class Server{
+
+    
 
     constructor(){
 
@@ -38,27 +41,36 @@ class Server{
 
     }
 
-    corsOptionsDelegate (req, callback) {
-        let allowlist = ['https://app-tweeter-front.vercel.app', 'http://localhost:5173']
+    corsOptionsDelegate  (origin, callback) {
 
-        let corsOptions;
+        const allowedOrigins = ['https://app-tweeter-front.vercel.app', 'http://localhost:5173']
 
-        // console.log(allowlist.indexOf(req.header('Origin')) !== -1);
-        // console.log(req.header('Origin'));
-        if (allowlist.indexOf(req.header('Origin')) !== -1) {
-          corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
-        } else {
-          corsOptions = { origin: false } // disable CORS for this request
+        // Permitir solicitudes sin origen (por ejemplo, desde Postman o aplicaciones móviles)
+        if (!origin) return callback(null, true);
+        
+        // Verificar si el origen está en la lista de permitidos
+        if (allowedOrigins.indexOf(origin) === -1) {
+          const msg = 'El origen de la solicitud no está permitido por la política de CORS.';
+          return callback(new Error(msg), false);
         }
-        callback(null, corsOptions) // callback expects two parameters: error and options
+        
+        return callback(null, true);
     }
 
+
     middlewares(){
+
         //public
         this.app.use(express.static('public'));
 
+        //Cookies
+        this.app.use(cookieParser())
+
         //Cors
-        this.app.use(cors(this.corsOptionsDelegate))
+        this.app.use(cors({
+            origin: this.corsOptionsDelegate,
+            credentials: true
+        }))
 
         // parse body
         this.app.use( express.json() );

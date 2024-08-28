@@ -4,19 +4,26 @@ const validateJWT = (req, res, next) => {
 
     try{
 
-        const token = req.header('x-token');
-
+        const token = req.cookies.token;
+        
         if(!token){
             return res.status(401).json({
                 ok: false,
-                msg: 'There is not token'
+                msg: 'Unauthorized: No token provided'
             });
         }
 
-        const { uid } = jwt.verify(token, process.env.JWT_KEY);
-        req.uid = uid;
+        jwt.verify(token, process.env.JWT_KEY, (err, uid) => {
 
-        next();
+            if (err) {
+              return res.status(403).json({ message: 'Forbidden: Invalid token' });
+            }
+
+            req.uid = uid;
+             // Guardar la información del usuario en el request
+            next();
+
+        });
 
     }catch(err){
 
