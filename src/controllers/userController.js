@@ -49,7 +49,8 @@ const getUsers = async (req = request, res) => {
 
 const getUserById = async (req = request, res) => {
 
-    const {id} = req.params;
+    const { id } = req.params;
+    const { uid : uidAuth } = req.uid
 
     try{
 
@@ -67,7 +68,8 @@ const getUserById = async (req = request, res) => {
                     ...restdata,
                     nfollowers: followers.length,
                     nfollowing: following.length
-                }
+                },
+                isFollowing: followers.includes(uidAuth)
             })
 
         }else{

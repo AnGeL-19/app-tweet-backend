@@ -161,8 +161,8 @@ const getTweet = async (req, res) => {
 
 const addLikeTweet = async (req, res) => {
 
-    const {idTweet} = req.body;
-    const {uid} = req;
+    const { idTweet } = req.params;
+    const {uid} = req.uid;
 
     console.log(uid,idTweet);
 
@@ -176,6 +176,8 @@ const addLikeTweet = async (req, res) => {
             User.findById(uid).populate()
         ])
 
+        console.log(tweet);
+        
 
         if(tweet.likes.includes(uid)){
 
@@ -191,7 +193,8 @@ const addLikeTweet = async (req, res) => {
 
             return res.status(200).json({
                 ok: true,
-                msg: 'quit liked'
+                msg: 'quit liked',
+                isLiked: false
             })
 
         }else{
@@ -209,7 +212,8 @@ const addLikeTweet = async (req, res) => {
 
             return res.status(200).json({
                 ok: true,
-                msg: 'liked'
+                msg: 'liked',
+                isLiked: true
             })
         }
 
@@ -225,8 +229,8 @@ const addLikeTweet = async (req, res) => {
 
 const addRetweetTweet = async (req, res) => {
 
-    const {idTweet} = req.body;
-    const {uid} = req;
+    const { idTweet } = req.params;
+    const { uid } = req.uid;
 
     console.log(uid,idTweet);
 
@@ -248,11 +252,12 @@ const addRetweetTweet = async (req, res) => {
 
             return res.status(200).json({
                 ok: true,
-                msg: 'quit Retweet'
+                msg: 'quit Retweet',
+                isRetweeted: false
             })
 
         }else{
-            console.log("no se encuentra el usuario");
+ 
             const retweet = tweet.nRetweets + 1; 
 
             await Promise.all([
@@ -264,7 +269,8 @@ const addRetweetTweet = async (req, res) => {
 
             res.status(200).json({
                 ok: true,
-                msg: 'added Retweet'
+                msg: 'added Retweet',
+                isRetweeted: true
             })
         }
 
@@ -282,8 +288,8 @@ const addRetweetTweet = async (req, res) => {
 
 const addSaveTweet = async (req, res) => {
 
-    const {idTweet} = req.body;
-    const {uid} = req;
+    const { idTweet } = req.params;
+    const { uid } = req.uid;
 
     try {
         
@@ -306,7 +312,8 @@ const addSaveTweet = async (req, res) => {
 
             res.status(200).json({
                 ok: true,
-                msg: 'quit Saved'
+                msg: 'quit Saved',
+                isSaved: false
             })
 
         }else{
@@ -322,7 +329,8 @@ const addSaveTweet = async (req, res) => {
 
             return res.status(200).json({
                 ok: true,
-                msg: 'Saved'
+                msg: 'Saved',
+                isSaved: true
             })
         }
 
@@ -339,8 +347,9 @@ const addSaveTweet = async (req, res) => {
 
 const addMsgTweet = async (req, res) => {
 
-    const {idTweet, comment, img} = req.body;
-    const {uid} = req;
+    const { idTweet } = req.params;
+    const { comment, img} = req.body;
+    const { uid } = req.uid;
 
     try {
         
@@ -403,8 +412,8 @@ const addMsgTweet = async (req, res) => {
 
 const addLikeCommentTweet = async (req, res) => {
 
-    const {idComment} = req.body;
-    const {uid} = req;
+    const { idComment } = req.body;
+    const { uid } = req.uid;
 
     console.log(uid,idComment);
 
@@ -468,7 +477,8 @@ const getCommentsTweetById = async (req, res) => {
             const { _id, __v, ...restClean } = rest._doc
             return {
                 cid: _id,
-                ...restClean
+                ...restClean,
+                liked: true
             }
         })
 

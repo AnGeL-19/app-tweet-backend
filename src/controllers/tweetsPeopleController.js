@@ -24,13 +24,13 @@ const getTweetsFollowing = async (req = request, res = response) => {
 
         const tweetsFollowing = await Tweet.find({
                 userTweet: {
-                    $in: [...followings]
+                    $in: [...followings, uid]
                 }, 
                 showEveryone: true
             },
             null,
             { 
-            skip: page * limit, // Starting Row
+            skip: (page - 1) * limit, // Starting Row
             limit: limit, // Ending Row
             sort: { date : -1 } 
         })
@@ -51,10 +51,10 @@ const getTweetsFollowing = async (req = request, res = response) => {
         const tweetF = tweetsFollowing.map( tweet => {
 
             const { userTweet ,...restTweet } = tweet;
-            const { _id: tid, retweets, comentPeople, __v, ...restTweetClean } = restTweet._doc
+            const { _id: tid, retweets, saved, likes, comentPeople, __v, ...restTweetClean } = restTweet._doc
             const { _id, ...restUser } = userTweet._doc;
 
-
+  
             return {
                 tid,
                 ...restTweetClean,
@@ -68,7 +68,9 @@ const getTweetsFollowing = async (req = request, res = response) => {
                     }
                 })[0]
                 ,
-                retweets: retweets.map( retweet => retweet._id),
+                retweeted: !!retweets.find( user => user._id.toString() === uid),
+                liked: likes.includes(uid),
+                saved: saved.includes(uid),
                 userTweet: {
                     uid: _id,
                     ...restUser

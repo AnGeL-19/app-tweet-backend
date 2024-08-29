@@ -35,43 +35,38 @@ router.get('/:id/comments', [
     validateJWT,
 ] , getCommentsTweetById );
 
-router.put('/like', [
+router.put('/:idTweet/like', [
     validateJWT,
-    check('idTweet','idTweet is necessary').notEmpty(),
     check('idTweet','idTweet is not mongoId').isMongoId(),
     check('idTweet').custom(validTweetExist),
     validInputs,  
 ], addLikeTweet );
 
-router.put('/retweet', [
+router.put('/:idTweet/retweet', [
     validateJWT,
-    check('idTweet','idTweet is necessary').notEmpty(),
     check('idTweet','idTweet is not mongoId').isMongoId(),
     check('idTweet').custom(validTweetExist),
     validInputs
 ] , addRetweetTweet );
 
-router.put('/save', [
+router.put('/:idTweet/save', [
     validateJWT,
-    check('idTweet','idTweet is necessary').notEmpty(),
     check('idTweet','idTweet is not mongoId').isMongoId(),
     check('idTweet').custom(validTweetExist),
     validInputs
 ], addSaveTweet );
 
-router.post('/msg', [
+router.post('/:idTweet/comment', [
     validateJWT,
-    check('idTweet','idTweet is necessary').notEmpty(),
     check('idTweet','idTweet is not mongoId').isMongoId(),
     check('idTweet').custom(validTweetExist),
     check('comment','comment is necessary').notEmpty(),
     validInputs
 ] , addMsgTweet );
 
-router.put('/likeCmmt', [
+router.put('/:idComment/like-comment', [
     validateJWT,
-    check('idComment','idTweet is necessary').notEmpty(),
-    check('idComment','idTweet is not mongoId').isMongoId(),
+    check('idComment','idComment is not mongoId').isMongoId(),
     check('idComment').custom(validCommentExist),
     validInputs
 ] , addLikeCommentTweet );
