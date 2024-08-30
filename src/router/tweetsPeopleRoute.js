@@ -3,13 +3,11 @@ const { check } = require("express-validator");
 
 const {
   getTweetsFollowing,
-  getTweetsExplore,
-  getTweetsAndRetweets,
+  getTweetsBookMarks,
   getHashtags,
-  getSearchHashtag,
-  getTweetsByUserId,
+
   getTweetsSaved,
-  getTweetsLiked,
+  getTweetsExplore,
 } = require("../controllers/tweetsPeopleController");
 
 const {
@@ -21,9 +19,7 @@ const { validateJWT } = require("../middlewares/validate-jwt");
 
 const router = Router();
 
-router.get("/saved", [validateJWT], getTweetsSaved);
-
-router.get("/liked", [validateJWT], getTweetsLiked);
+router.get("/bookmarks", [validateJWT], getTweetsBookMarks);
 
 router.get("/explore", [validateJWT], getTweetsExplore);
 

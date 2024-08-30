@@ -321,126 +321,90 @@ const getUsersRecomment = async (req = request, res = response) => {
 
 const getTweetsByUserId = async (req, res) => {
 
-
+    const { uid } = req.uid 
     const { id } = req.params;
     const { limit = 5, page = 1, filter } = req.query;
     
-    let objFilter;
-    let tweetOptions;
+    let objFilter = {};
+    let tweetOptions = {};
 
-    if (filter==='likes') {
-        objFilter={
-            sort: { nLikes: -1 }
-        }
-        tweetOptions = {
-            userTweet:id,
-            showEveryone: true
-        }
-    }else if(filter === 'tweets'){
-        objFilter={
-            sort: {
-                date: -1
-            } 
-        }
-        tweetOptions = { 
-            userTweet: id, 
-            showEveryone: true 
-        }
-    }else if(filter === 'tweets&replies'){
-        objFilter={
-            sort: {
-                date: -1
-            } 
-        }
-        tweetOptions = { 
-            userTweet: id, 
-            retweets: id, 
-            showEveryone: true 
-        }
-    }else{
-        objFilter={}
-        tweetOptions = { 
-            userTweet: id, 
-            showEveryone: true
-        }
+    switch (filter) {
+        case 'likes':
+            objFilter = { sort: { nLikes: -1 } };
+            tweetOptions = { userTweet: id, showEveryone: true };
+            break;
+        case 'tweets':
+            objFilter = { sort: { date: -1 } };
+            tweetOptions = { userTweet: id, showEveryone: true };
+            break;
+        case 'tweetsReplies':
+            objFilter = { sort: { date: -1 } };
+            tweetOptions = { showEveryone: true };
+            break;
+        default:
+            tweetOptions = { userTweet: id, showEveryone: true };
+            break;
     }
 
-    console.log(objFilter, tweetOptions);
+    console.log(filter);
     
 
     try{
 
-        const tweetsResponse = await Tweet.find({
-            ...tweetOptions
-        },
-        null,
-        {
-            // ...objFilter
-        })
-        // .or([{ userTweet:id },{ retweets: id }])
-        .populate({
-              path: 'userTweet retweets', select: '_id imgUser name'
-        })
-        .populate(
-          {
-              path: 'comentPeople',
-              options: { 
-                  skip: 0, // Starting Row
-                  limit: 1, // Ending Row
-                  sort: { nLikes : -1 } 
-              },
-              populate: {path: 'userComment', select: '_id imgUser name' }
-          }
-        )
-        .skip( (page - 1)   * limit)
-        .limit(limit);
+        let tweetsResponse;
+        if (filter === 'tweetsReplies') {
+            tweetsResponse = await Tweet.find({
+                ...tweetOptions
+            })
+            .or([{ userTweet: id }, { retweets: id }])
+            .populate({ path: 'userTweet retweets', select: '_id imgUser name' })
+            .sort(objFilter.sort)
+            .skip((page - 1) * limit)
+            .limit(limit);
+        } else {
+            tweetsResponse = await Tweet.find({
+                ...tweetOptions
+            })
+            .populate({ path: 'userTweet retweets', select: '_id imgUser name' })
+            .sort(objFilter.sort)
+            .skip((page - 1) * limit)
+            .limit(limit);
+        }
 
-        console.log(tweetsResponse);
         
 
-        const tweets = tweetsResponse.map( tweet => {
-
-            const { userTweet ,...restTweet } = tweet;
-            const { _id: tid, retweets, comentPeople, __v, ...restTweetClean } = restTweet._doc
-            const { _id, ...restUser } = userTweet._doc;
-
+        const tweets = tweetsResponse.map(tweet => {
+            const { userTweet, ...restTweet } = tweet;
+            const { _id: tid, retweets, saved, likes, __v, ...restTweetClean } = restTweet._doc;
+            const { _id,...restUser } = userTweet._doc;
 
             return {
                 tid,
                 ...restTweetClean,
-                userRetweet: retweets.map( retweet => {
-                    if (retweet._id == id) {
-                        return 'You Retweeted'
-                    }else if (followings.find(userR => `${userR._id}` == `${retweet._id}`)) {
-                        return `${retweet.name} Retweeted`
-                    }else{
+                userRetweet: retweets.map(re => {
+                    if (re._id.toString() === uid) {
+                        return 'You Retweeted';
+                    } else if (followings.find(userR => `${userR._id}` === `${re._id}`)) { // ARREGLAR ESTA PARTE, TRUENA EN followings
+                        return `${re.name} Retweeted`;
+                    } else {
                         return '';
                     }
-                })[0]
-                ,
-                retweets: retweets.map( retweet => retweet._id),
+                })[0],
+                retweeted: !!retweets.find(user => user._id.toString() === uid),
+                liked: likes.includes(uid),
+                saved: saved.includes(uid),
                 userTweet: {
                     uid: _id,
                     ...restUser
-                },
-                comentPeople: comentPeople.map(cmm => {
-                    const { ...rest } = cmm
-                    const { _id, __v, ...restClean } = rest._doc
-                    return {
-                        cid: _id,
-                        ...restClean
-                    }
-                })
-            }
-                   
-        });   
-        
+                }
+            };
+        });
 
         return res.status(200).json({
             ok: true,
             length: tweets.length,
             data: tweets
-        })
+        });
 
     }catch(e){
         console.log(e);

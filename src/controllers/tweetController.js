@@ -388,7 +388,8 @@ const addMsgTweet = async (req, res) => {
                 uid: user._id,
                 name: user.name,
                 imgUser: user.imgUser
-            }
+            },
+            liked: false
         }
 
         console.log(tweet, user);
@@ -412,7 +413,7 @@ const addMsgTweet = async (req, res) => {
 
 const addLikeCommentTweet = async (req, res) => {
 
-    const { idComment } = req.body;
+    const { idComment } = req.params;
     const { uid } = req.uid;
 
     console.log(uid,idComment);
@@ -431,7 +432,8 @@ const addLikeCommentTweet = async (req, res) => {
 
             return res.status(200).json({
                 ok: true,
-                msg: 'quit liked'
+                msg: 'quit liked',
+                isLiked: false
             })
         }else{
 
@@ -443,7 +445,8 @@ const addLikeCommentTweet = async (req, res) => {
 
             return res.status(200).json({
                 ok: true,
-                msg: 'liked'
+                msg: 'liked',
+                isLiked: true
             })
         }
         
@@ -461,7 +464,8 @@ const addLikeCommentTweet = async (req, res) => {
 const getCommentsTweetById = async (req, res) => {
 
     const {id : idTweet} = req.params;
-    const {limit = 5, page} = req.query;
+    const { limit = 5, page = 1 } = req.query;
+    const { uid } = req.uid
     
     try {
 
@@ -474,11 +478,11 @@ const getCommentsTweetById = async (req, res) => {
 
         const commentTweets = commets.map(cmm => {
             const { ...rest } = cmm
-            const { _id, __v, ...restClean } = rest._doc
+            const { _id, likes, __v, ...restClean } = rest._doc
             return {
                 cid: _id,
                 ...restClean,
-                liked: true
+                liked: likes.includes(uid)
             }
         })
 
