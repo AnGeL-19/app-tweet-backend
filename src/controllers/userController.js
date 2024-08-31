@@ -6,12 +6,12 @@ const User = require('../models/user');
 
 const getUsers = async (req = request, res) => {
 
-    const {uid} = req;
+    const { uid: uidAuth } = req.uid;
     const { search = '', limit = 5, page = 1 } = req.query;
 
     try{
 
-        const user = await User.findById(uid).select('following')
+        const user = await User.findById(uidAuth).select('following')
 
         const followings = user.following.map( f => {
             return {
@@ -19,17 +19,18 @@ const getUsers = async (req = request, res) => {
             }
         })
 
-        const users = await User.find({ 
+        const users= await User.find({ 
             name : { $regex: `${search}` }, 
-            $nor: [{_id: uid }, ...followings] },
+            $nor: [{_id: uidAuth }, ...followings] },
             null,
             {
                 skip: (page - 1) * limit,
                 limit: limit,
             }
         )
-        .select('_id name bio imgUser imgUserBackground followers')        
-
+        .select('_id name bio imgUser imgUserBackground followers')    
+        
+    
         return res.status(200).json({
             ok: true,
             length: users.length,
@@ -56,10 +57,10 @@ const getUserById = async (req = request, res) => {
 
         const user = await User.findById(id);
 
-        const {followers, following, ...rest} = user;
-        const { _id: uid, ...restdata } = rest._doc
-
         if(user){
+
+            const {followers, following, ...rest} = user;
+            const { _id: uid, ...restdata } = rest._doc
 
             return res.status(200).json({
                 ok: true,

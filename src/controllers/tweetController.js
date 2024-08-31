@@ -167,9 +167,7 @@ const addLikeTweet = async (req, res) => {
     console.log(uid,idTweet);
 
     try {
-        
-        // NOTA: BUSCAR USUARIO QUE YA TIENE LIKE Y ELIMINARLO
-        // const tweetUser = await Tweet.findById(idTweet).populate();
+
 
         const [tweet, user] = await Promise.all([
             Tweet.findById(idTweet).populate(),
