@@ -22,8 +22,8 @@ router.post('/', [
     check('description','description is necessary').notEmpty(),
     check('description','description is not string').isString(),
     check('hashtags','hashtags is not array').isArray().optional(),
-    check('img','img is not string').isString().optional(),
-    check('privacity','privacity is not boolean').isBoolean().optional(), 
+    check('fileImage', 'the img must be a File').optional(),
+    check('privacity','privacity is not string').isString().optional(), 
     validInputs
 ] , createTweet );
 

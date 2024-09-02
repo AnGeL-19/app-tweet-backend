@@ -30,10 +30,11 @@ const getTweetsFollowing = async (req = request, res = response) => {
             },
             null,
             { 
-            skip: (page - 1) * limit, // Starting Row
-            limit: limit, // Ending Row
-            sort: { date : -1 } 
-        })
+                sort: { _id: -1 } ,
+                skip: (page - 1) * limit, // Starting Row
+                limit: limit, // Ending Row
+            }
+        )
         .populate({   
             path: 'userTweet retweets', 
             select: '_id imgUser name'
@@ -101,21 +102,24 @@ const getTweetsExplore = async (req = request, res = response) => {
         case 'top':
             objFilter={
                 sort: { 
-                    nLikes: -1 
+                    nLikes: -1,
+                    _id: 1
                 }
             }
             break;
         case 'lastest':
             objFilter={
                 sort: {
-                    date: -1
+                    date: -1,
+                    _id: 1
                 } 
             }
             break;
         default:
             objFilter={
                 sort: { 
-                    date: -1 
+                    date: -1,
+                    _id: 1 
                 }
             }
             break;
@@ -154,9 +158,9 @@ const getTweetsExplore = async (req = request, res = response) => {
             },
             null,
             {
+                ...objFilter,
                 skip: (page - 1) * limit,
                 limit: limit,
-                ...objFilter
             })
         .populate({
             path:'userTweet retweets', 
@@ -246,74 +250,6 @@ const getHashtags = async (req = request, res = response) => {
 
 }
 
-const getSearchHashtag = async (req = request, res = response) => {
-
-    const {hashtag, limit = 5, page = 1} = req.query;
-    console.log(hashtag);
-
-    try {
-        
-        
-        const hashtagResponse = await Hashtag.findOne({ nameHashtag: hashtag })
-        console.log(hashtagResponse);
-         
-        const tweetHastags = await Tweet.find({hashtagsTweet: hashtagResponse._id, showEveryone: true},null,{
-            skip: (page - 1) * limit, // Starting Row
-            limit: limit, // Ending Row
-        })
-        .populate({
-            path: 'userTweet', select: '_id imgUser name'
-        })
-        .populate({ 
-            path: 'comentPeople',
-            options: { 
-                skip: 0, // Starting Row
-                limit: 1, // Ending Row
-                sort: { nLikes : -1 } 
-            },
-            populate: {path: 'userComment', select: '_id imgUser name' } 
-        })
-        console.log(tweetHastags);
-
-        const tweets = tweetHastags.map( tw => {
-
-            const { __v,_id: tid, userTweet, comentPeople, ...others } = tw._doc;
-            const {followers, following, _id: uid,...restUser } = userTweet._doc;
-
-            return {
-                tid,
-                userTweet: {
-                    uid,
-                    ...restUser
-                },
-                comentPeople: comentPeople.map(cmm => {
-                    const { ...rest } = cmm
-                    const { _id, ...restClean } = rest._doc
-                    return {
-                        cid: _id,
-                        ...restClean
-                    }
-                }),
-                ...others
-            }
-        })
-
-        return res.status(200).json({
-            ok: true,
-            data: tweets
-        });
-
-    } catch (e) {
-        console.log(e);
-        return res.status(500).json({
-            ok: false,
-            msg: 'Error, talk to the admin'
-        });
-
-    }
-
-}
-
 const getTweetsBookMarks = async (req = request, res = response) => {
 
     const { uid } = req.uid;
@@ -355,6 +291,7 @@ const getTweetsBookMarks = async (req = request, res = response) => {
                                  .populate({
                                     path: 'userTweet retweets', select: '_id imgUser name'
                                  })
+                                 .sort({_id: 1})
                                  .skip((page - 1) * limit)
                                  .limit(limit)
         ])
@@ -414,78 +351,12 @@ const getTweetsBookMarks = async (req = request, res = response) => {
 
 }
 
-// const getTweetsLiked = async (req = request, res = response) => {
-
-//     const {uid} = req;
-
-//     const {limit = 5, page = 1} = req.query;
-
-//     try{
-
-//         const tweetsResponse = await Tweet.find({ likes: uid })
-//                                  .populate({
-//                                     path: 'userTweet', select: '_id imgUser name'
-//                                  })
-//                                  .populate({
-//                                     path: 'comentPeople',
-//                                     options: { 
-//                                         skip: 0, // Starting Row
-//                                         limit: 1, // Ending Row
-//                                         sort: { nLikes : -1 } 
-//                                     },
-//                                     populate: {path: 'userComment', select: '_id imgUser name' }
-//                                  })
-//                                  .skip((page - 1) * limit)
-//                                  .limit(limit)
-
-
-//         const tweets = tweetsResponse.map(tweet => {
-     
-//             const { _id: tid, __v, comentPeople ,userTweet, ...rest } = tweet._doc;
-//             const { _id: id ,...restUser } = userTweet._doc
-
-//             return{
-//                 tid,
-//                 ...rest,
-//                 userTweet: {
-//                     uid: id,
-//                     ...restUser
-//                 },
-//                 comentPeople: comentPeople.map(cmm => {
-//                     const { ...rest } = cmm
-//                     const { _id, ...restClean } = rest._doc
-//                     return {
-//                         cid: _id,
-//                         ...restClean
-//                     }
-//                 })
-//             }
-//         });
-
-
-//         return res.status(200).json({
-//             ok: true,
-//             length: tweets.length,
-//             data: tweets
-//         })
-
-//     }catch(e){
-//         console.log(e);
-//         return res.status(500).json({
-//             ok: false,
-//             msg: 'Error, talk to the admin'
-//         });
-//     }
-
-// }
-
 module.exports = {
 
     getTweetsFollowing,
     getTweetsExplore,
    
     getHashtags,
-    getSearchHashtag,
     getTweetsBookMarks
 
 }

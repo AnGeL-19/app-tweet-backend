@@ -28,15 +28,15 @@ router.get('/following/:id', validateJWT , getUserFollowing  );
 
 router.get("/:id/tweets", [validateJWT], getTweetsByUserId);
 
-router.get(
-    "/:id/tweets/retweets",
-    [
-      validateJWT,
-      check("id", "id is not mongoId").isMongoId(),
-      check("id", "id is necesary").notEmpty(),
-      validInputs,
-    ],
-    getTweetsAndRetweets
-  );
+// router.get(
+//     "/:id/tweets/retweets",
+//     [
+//       validateJWT,
+//       check("id", "id is not mongoId").isMongoId(),
+//       check("id", "id is necesary").notEmpty(),
+//       validInputs,
+//     ],
+//     getTweetsAndRetweets
+//   );
 
 module.exports = router;

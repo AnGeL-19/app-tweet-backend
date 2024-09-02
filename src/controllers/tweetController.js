@@ -4,25 +4,41 @@ const User = require('../models/user');
 const Comment = require('../models/comment');
 const Hashtag = require('../models/hashtag');
 
+const cloudinary = require('cloudinary').v2
+cloudinary.config( process.env.CLOUDINARY_URL );
+
 const createTweet =  async ( req=request, res= response) => {
 
-    const {description, privacity, img} = req.body;
+    const {description, privacity} = req.body;
 
     const { uid } = req.uid;
 
-    console.log(uid, description, privacity,'si entra');
-
+    const file  = req.files;
+    
     try{
         
+
+        let image_url = '';
+
+        if (file) {
+            const { tempFilePath } = file.fileImage
+
+            const {secure_url} = await cloudinary.uploader.upload(tempFilePath);
+
+            image_url = secure_url
+        }
+
         const regex = /#\w+/g;
 
         const hashtags = description.match(regex);
 
+        const accesibility = privacity ? true : privacity === 'public' ? true : false;
+
         const newTweet = new Tweet({
             userTweet: uid,
             description,
-            imgTweet: img,
-            showEveryone: privacity
+            imgTweet: image_url,
+            showEveryone: accesibility
         });
 
 
@@ -348,25 +364,34 @@ const addSaveTweet = async (req, res) => {
 const addMsgTweet = async (req, res) => {
 
     const { idTweet } = req.params;
-    const { comment, img} = req.body;
+    const { comment } = req.body;
     const { uid } = req.uid;
+    const file  = req.files;
 
     try {
+
+        let image_url = '';
+
+        if (file) {
+            const { tempFilePath } = file.fileImage
+
+            const {secure_url} = await cloudinary.uploader.upload(tempFilePath);
+
+            image_url = secure_url
+        }
+
         
         const newCommet = new Comment({
             userComment: uid,
             tweetComment: idTweet,
             commentText: comment,
-            imgComment: img
+            imgComment: image_url
         })
 
         const [tweet,user] = await Promise.all([
             Tweet.findById(idTweet), 
             User.findById(uid)
         ]); 
-
-     
-       
 
         const nComments = tweet.nComentPeople + 1
 
@@ -470,9 +495,9 @@ const getCommentsTweetById = async (req, res) => {
     try {
 
         const commets = await Comment.find({tweetComment: idTweet},null,{ 
+            sort: { nLikes : -1, _id: -1 },
             skip: (page - 1) * limit, // Starting Row
             limit: limit, // Ending Row
-            sort: { nLikes : -1 },
             populate: {path: 'userComment', select: '_id imgUser name' }
         })
 
