@@ -6,15 +6,17 @@ const Hashtag = require('../models/hashtag');
 
 const createTweet =  async ( req=request, res= response) => {
 
-    const {description, hashtags, privacity, img} = req.body;
+    const {description, privacity, img} = req.body;
 
     const { uid } = req.uid;
 
-    console.log(uid, description, hashtags, privacity,'si entra');
+    console.log(uid, description, privacity,'si entra');
 
     try{
         
+        const regex = /#\w+/g;
 
+        const hashtags = description.match(regex);
 
         const newTweet = new Tweet({
             userTweet: uid,
@@ -37,7 +39,7 @@ const createTweet =  async ( req=request, res= response) => {
                     }); 
 
                     createHashtag.hashtagTweet.push(newTweet._id);
-                    tweet.hashtagsTweet.push(createHashtag._id); 
+                    newTweet.hashtagsTweet.push(createHashtag._id); 
 
                     await createHashtag.save()
 

@@ -349,12 +349,24 @@ const getTweetsBookMarks = async (req = request, res = response) => {
 
     try{
 
-        const tweetsResponse = await Tweet.find(optionFilter)
+        const [ user, tweetsResponse ] = await Promise.all([
+            User.findById(uid).select('following'),
+            Tweet.find(optionFilter)
                                  .populate({
                                     path: 'userTweet retweets', select: '_id imgUser name'
                                  })
                                  .skip((page - 1) * limit)
                                  .limit(limit)
+        ])
+
+
+        const followings = user.following.map( f => {
+            return {
+                _id: f
+            }
+        })
+
+        // const tweetsResponse = await 
 
 
         const tweets = tweetsResponse.map(tweet => {

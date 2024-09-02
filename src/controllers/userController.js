@@ -372,7 +372,14 @@ const getTweetsByUserId = async (req, res) => {
             .limit(limit);
         }
 
-        
+        const user = await User.findById(uid).select('following')
+
+
+        const followings = user.following.map( f => {
+            return {
+                _id: f
+            }
+        })
 
         const tweets = tweetsResponse.map(tweet => {
             const { userTweet, ...restTweet } = tweet;
@@ -385,7 +392,7 @@ const getTweetsByUserId = async (req, res) => {
                 userRetweet: retweets.map(re => {
                     if (re._id.toString() === uid) {
                         return 'You Retweeted';
-                    } else if (followings.find(userR => `${userR._id}` === `${re._id}`)) { // ARREGLAR ESTA PARTE, TRUENA EN followings
+                    } else if (followings.find(userR => `${userR._id}` === `${re._id}`)) { 
                         return `${re.name} Retweeted`;
                     } else {
                         return '';
