@@ -182,8 +182,6 @@ const addLikeTweet = async (req, res) => {
     const { idTweet } = req.params;
     const {uid} = req.uid;
 
-    console.log(uid,idTweet);
-
     try {
 
 
@@ -191,9 +189,6 @@ const addLikeTweet = async (req, res) => {
             Tweet.findById(idTweet).populate(),
             User.findById(uid).populate()
         ])
-
-        console.log(tweet);
-        
 
         if(tweet.likes.includes(uid)){
 
@@ -214,9 +209,8 @@ const addLikeTweet = async (req, res) => {
             })
 
         }else{
-            console.log("no se encuentra el usuario");
+
             const like = tweet.nLikes + 1; 
-            console.log(like, "likes");
             
             await Promise.all([
                 tweet.updateOne({$push: {likes: uid}}),
@@ -235,7 +229,7 @@ const addLikeTweet = async (req, res) => {
 
     } catch (e) {
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -247,8 +241,6 @@ const addRetweetTweet = async (req, res) => {
 
     const { idTweet } = req.params;
     const { uid } = req.uid;
-
-    console.log(uid,idTweet);
 
     try {
         
@@ -281,9 +273,8 @@ const addRetweetTweet = async (req, res) => {
                 user.updateOne({$push:{retweets: idTweet}}),
                 tweet.updateOne({nRetweets: retweet})
             ])
-            console.log("Agregado");
 
-            res.status(200).json({
+            return res.status(200).json({
                 ok: true,
                 msg: 'added Retweet',
                 isRetweeted: true
@@ -294,7 +285,7 @@ const addRetweetTweet = async (req, res) => {
 
     } catch (e) {
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -324,25 +315,22 @@ const addSaveTweet = async (req, res) => {
                 tweet.updateOne({nSaved: unSaved}),
             ])
              // PULL SACA DEL ARRAY
-            console.log("eliminado");
 
-            res.status(200).json({
+            return res.status(200).json({
                 ok: true,
                 msg: 'quit Saved',
                 isSaved: false
             })
 
         }else{
-            console.log("no se encuentra el usuario");
+
             const saved = tweet.nSaved + 1; 
             await Promise.all([
                 tweet.updateOne({$push:{saved: uid}}),
                 user.updateOne({$push: {saved: idTweet}}),
                 tweet.updateOne({nSaved: saved}),
             ])
-            // PUSH AGREGA UN ELEMENTO AL ARRAY
-            console.log("Agregado");
-
+    
             return res.status(200).json({
                 ok: true,
                 msg: 'Saved',
@@ -353,7 +341,7 @@ const addSaveTweet = async (req, res) => {
 
     } catch (e) {
         console.log(e);
-        res.status(500).json({
+        return res.status(500).json({
             ok: false,
             msg: 'Error, talk to the admin'
         });
@@ -417,8 +405,6 @@ const addMsgTweet = async (req, res) => {
             liked: false
         }
 
-        console.log(tweet, user);
-        
 
         return res.status(201).json({
             ok: true,
@@ -441,14 +427,12 @@ const addLikeCommentTweet = async (req, res) => {
     const { idComment } = req.params;
     const { uid } = req.uid;
 
-    console.log(uid,idComment);
-
     try {
         
         const commentUser = await Comment.findById(idComment).populate();
 
         if(commentUser.likes.includes(uid)){
-            console.log("si esta el usuario");
+          
             const disLike = commentUser.nLikes - 1; 
             await Promise.all([
                 commentUser.updateOne({$pull: {likes: uid}}),

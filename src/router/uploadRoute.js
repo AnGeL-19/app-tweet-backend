@@ -1,7 +1,12 @@
 const { Router } = require('express');
 const { check } = require('express-validator');
 const { validateJWT } = require('../middlewares/validate-jwt');
-const { uploadImageCloudinary, uploadImageCloudinaryUpdate } = require('../controllers/uploadController');
+const { 
+    uploadImageCloudinary, 
+    uploadImageCloudinaryUpdate, 
+    updateUserBackgroundImage,
+    updateUserImage
+} = require('../controllers/uploadController');
 
 const router = Router();
 
@@ -12,5 +17,13 @@ router.post('/image',[
 router.put('/image/:public_id',[
     validateJWT,
 ], uploadImageCloudinaryUpdate )
+
+router.patch('/user/profile/image/:public_id',[
+    validateJWT,
+], updateUserImage )
+
+router.patch('/user/background/image/:public_id',[
+    validateJWT,
+], updateUserBackgroundImage )
 
 module.exports = router;

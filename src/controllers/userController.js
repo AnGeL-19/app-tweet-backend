@@ -92,17 +92,15 @@ const getUserById = async (req = request, res) => {
 
 }
 
+
 const updateUser = async (req = request, res) => {
 
-    const {uid} = req;
-    const {imgUser, imgUserBackground, name, bio, email, password} = req.body;
+    const { uid } = req.uid;
+    const {name, bio, password} = req.body;
     
     let objUser = {
-        imgUser, 
-        imgUserBackground, 
         name, 
-        bio, 
-        email
+        bio,
     };
 
     try{
@@ -117,15 +115,26 @@ const updateUser = async (req = request, res) => {
 
         if(user){
 
+            const {followers, following, ...rest} = user;
+            const { _id: uid, ...restdata } = rest._doc
+
             return res.status(200).json({
                 ok: true,
-                msg: 'Update succesful'
+                msg: 'Update succesful',
+                data: {
+                    uid,
+                    ...restdata,
+                    nfollowers: followers.length,
+                    nfollowing: following.length
+                }
+               
             })
 
         }else{
             return res.status(204).json({
                 ok: true,
-                msg: 'User not found'
+                msg: 'User not found',
+                data: null
             })
         }
 
@@ -250,8 +259,6 @@ const addFollowAndUnfollow = async (req, res) => {
 
 
         if(user.following.includes(id)){
-            console.log("si esta, dejar de seguir");
-            // userFollowing.following.length
 
             await Promise.all([
                 // user.updateOne({$pull: {following: id}}),
@@ -350,8 +357,6 @@ const getTweetsByUserId = async (req, res) => {
             break;
     }
 
-    console.log(filter);
-    
 
     try{
 
