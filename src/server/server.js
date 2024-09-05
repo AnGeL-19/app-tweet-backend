@@ -43,7 +43,7 @@ class Server{
 
     corsOptionsDelegate  (origin, callback) {
 
-        const allowedOrigins = ['https://app-tweeter-front.vercel.app', 'http://localhost:5173']
+        const allowedOrigins = ['https://tweet-app-ashy.vercel.app', 'http://localhost:5173']
 
         // Permitir solicitudes sin origen (por ejemplo, desde Postman o aplicaciones móviles)
         if (!origin) return callback(null, true);
