@@ -22,7 +22,7 @@ const UserSchema = Schema({
     },
     imgUser:{
         type: String,
-        default: 'https://res.cloudinary.com/dajit1a8r/image/upload/v1725477462/user-icon_e4vzuq.webp'
+        default: 'https://res.cloudinary.com/dajit1a8r/image/upload/c_fill,w_80,h_80/v1725477462/user-icon_e4vzuq.webp'
     },
     imgUserBackground:{
         type: String,

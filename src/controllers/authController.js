@@ -21,9 +21,7 @@ const createUser =  async ( req=request, res= response) => {
         const user = new User({
             name,
             email,
-            password,
-            imgUser: 'https://res.cloudinary.com/dajit1a8r/image/upload/v1725477462/user-icon_e4vzuq.webp',
-            imgUserBackground: 'https://res.cloudinary.com/dajit1a8r/image/upload/v1725477462/bg-image_bqnkay.webp'
+            password
         });
 
         // encrypt password
