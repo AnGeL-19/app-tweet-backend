@@ -33,7 +33,7 @@ const createUser =  async ( req=request, res= response) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: true, // Asegúrate de estar usando HTTPS
-            sameSite: 'Strict',
+            sameSite: 'None',
             maxAge: 24 * 60 * 60 * 1000 // Expira en 1 día
         });
 
@@ -85,7 +85,7 @@ const loginUser =  async ( req=request, res= response) => {
         res.cookie('token', token, {
             httpOnly: true,
             secure: true, // Asegúrate de estar usando HTTPS
-            sameSite: 'Strict',
+            sameSite: 'None',
             maxAge: 24 * 60 * 60 * 1000 // Expira en 1 día
         });
 
