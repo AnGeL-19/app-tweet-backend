@@ -4,7 +4,7 @@ const User = require('../models/user');
 const existEmail = async (email = '') => {
     const exist = await User.findOne({email});
     if (exist) {
-        throw new Error('this email exist already');
+        throw new Error('This email exist already');
     }
 }
 
