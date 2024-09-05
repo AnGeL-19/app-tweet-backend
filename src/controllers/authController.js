@@ -150,6 +150,14 @@ const logout = async (req = request, res = response) => {
 
     try{
 
+        res.cookie('token', '', {
+            expires: new Date(0),
+            httpOnly: true,
+            secure: true,
+            sameSite: 'None',
+            path: '/',
+        });
+
         res.clearCookie('token');
         
         return res.status(200).json({
@@ -159,7 +167,7 @@ const logout = async (req = request, res = response) => {
 
     }catch(err){
         console.log(err);
-        res.status(404).json({
+        return res.status(404).json({
             ok: false,
             msg: 'error logout token'
         });
