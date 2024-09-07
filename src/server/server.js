@@ -27,9 +27,6 @@ class Server{
         this.server = http.createServer(this.app);
         
 
-        // configuration sockets
-        this.io = socketio( this.server );
-
         // middlewares
         this.middlewares();
 
@@ -96,7 +93,7 @@ class Server{
     }
 
     configurationSockets(){
-        const socketConf = new SocketConfig(this.io)
+        const socketConf = new SocketConfig(this.server)
         socketConf.connection()
     }
 

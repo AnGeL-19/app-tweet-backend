@@ -5,7 +5,7 @@ class SocketConfig {
     constructor( server ){
         this.io = new Server(server, {
             cors: {
-                origin: ['https://tweet-app-ashy.vercel.app', 'http://localhost:5173/']
+                origin: ['https://tweet-app-ashy.vercel.app', 'http://localhost:5173']
             }
         });
     }
@@ -16,8 +16,10 @@ class SocketConfig {
         this.io.on('connection', (socket) => {
             console.log('a user connected');
 
-            socket.on('chat message', (msg) => {
-                console.log('message: ' + msg);
+            socket.on('chat from', (msg) => {
+
+                socket.emit('chat to', msg)
+                console.log('message from: ' + msg);
             });
 
             socket.on('disconnect', () => {
