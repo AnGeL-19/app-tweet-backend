@@ -48,6 +48,10 @@ const UserSchema = Schema({
         type: Schema.Types.ObjectId,
         ref: 'Tweet'
     }],
+    connects: [{
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     followers: [{
         type: Schema.Types.ObjectId,
         ref: 'User'

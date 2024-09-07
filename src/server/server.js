@@ -2,12 +2,12 @@ const express = require('express');
 const http = require('http');
 const socketio = require('socket.io');
 const cors =  require('cors');
-var cookieParser = require('cookie-parser')
-// const Sockets = require('./sockets');
+const cookieParser = require('cookie-parser')
 
 // const { dbConnection } = require('../database/config');
 const fileUpload = require('express-fileupload');
 const { dbConnection } = require('../db/configuration');
+const SocketConfig = require('../sockets/socket');
 
 
 class Server{
@@ -34,7 +34,7 @@ class Server{
         this.middlewares();
 
         // initialize sockets
-        // this.configurationSockets();
+        this.configurationSockets();
 
         //routers api
         this.routers();
@@ -95,9 +95,10 @@ class Server{
         this.app.use('/api/upload', require('../router/uploadRoute'));
     }
 
-    // configurationSockets(){
-    //     new Sockets(this.io);
-    // }
+    configurationSockets(){
+        const socketConf = new SocketConfig(this.io)
+        socketConf.connection()
+    }
 
     execute(){
         

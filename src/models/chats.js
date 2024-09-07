@@ -2,32 +2,20 @@ const {Schema,model} = require('mongoose');
 
 const CommentSchema = Schema({
 
-    
-    userComment: {
+    userFrom: {
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,  
     },
-    tweetComment: {
+    userTo: {
         type: Schema.Types.ObjectId,
-        ref: 'Tweet',
+        ref: 'User',
         required: true,  
     },   
-    commentText: {
+    message: {
         type: String,
         default: ''
-    },
-    imgComment:{
-        type: String,
-    },
-    nLikes: {
-        type: Number,
-        default: 0
-    },
-    likes: [{
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    }],
+    }, 
     date: {
         type: Date,
         default: new Date()
@@ -41,4 +29,4 @@ CommentSchema.method('toJSON', function() {
     return object;
 });
 
-module.exports = model('Comment', CommentSchema);
+module.exports = model('Chats', CommentSchema);
