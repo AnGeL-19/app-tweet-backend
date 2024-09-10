@@ -5,8 +5,6 @@ const {
   getTweetsFollowing,
   getTweetsBookMarks,
   getHashtags,
-
-  getTweetsSaved,
   getTweetsExplore,
 } = require("../controllers/tweetsPeopleController");
 

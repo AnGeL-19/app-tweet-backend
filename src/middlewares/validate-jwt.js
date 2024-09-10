@@ -36,4 +36,34 @@ const validateJWT = (req, res, next) => {
 
 }
 
-module.exports = {validateJWT};
+const validationJWTSocket = (socket, next) => {
+    try {
+
+        const token = socket.handshake.headers['authorization'];
+        if (token) {
+            try {
+              // Verifica el JWT o realiza la validación del token aquí
+              const user = jwt.verify(token, process.env.JWT_KEY); // Verifica el JWT
+
+              console.log(user);
+              
+            socket.userId = user.uid; // Guarda el ID del usuario en el socket
+
+              next(); // Continúa con la conexión
+
+            } catch (err) {
+              next(new Error('Token invalid')); // Si hay un error, rechaza la conexión
+            }
+          } else {
+            next(new Error('Token is necesary')); // Si no hay token, rechaza la conexión
+          }
+    } catch (error) {
+        console.log(error);
+        
+    }
+}
+
+module.exports = {
+    validateJWT,
+    validationJWTSocket
+};

@@ -1,10 +1,10 @@
 const express = require('express');
 const http = require('http');
-const socketio = require('socket.io');
+
 const cors =  require('cors');
 const cookieParser = require('cookie-parser')
-
 // const { dbConnection } = require('../database/config');
+
 const fileUpload = require('express-fileupload');
 const { dbConnection } = require('../db/configuration');
 const SocketConfig = require('../sockets/socket');
@@ -23,10 +23,9 @@ class Server{
         dbConnection();
 
         // http server
-        
         this.server = http.createServer(this.app);
-        
 
+    
         // middlewares
         this.middlewares();
 
@@ -90,6 +89,7 @@ class Server{
         this.app.use('/api/user', require('../router/userRoute'));
         this.app.use('/api/tweets', require('../router/tweetsPeopleRoute'));
         this.app.use('/api/upload', require('../router/uploadRoute'));
+        this.app.use('/api/connect', require('../router/connectRoute'));
     }
 
     configurationSockets(){

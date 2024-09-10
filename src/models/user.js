@@ -50,7 +50,7 @@ const UserSchema = Schema({
     }],
     connects: [{
         type: Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'Connect'
     }],
     followers: [{
         type: Schema.Types.ObjectId,

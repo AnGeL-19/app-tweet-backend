@@ -1,17 +1,12 @@
 const {Schema,model} = require('mongoose');
 
-const CommentSchema = Schema({
+const ChatSchema = Schema({
 
-    userFrom: {
+    connection: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Connect',
         required: true,  
-    },
-    userTo: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true,  
-    },   
+    }, 
     message: {
         type: String,
         default: ''
@@ -23,10 +18,10 @@ const CommentSchema = Schema({
     
 });
 
-CommentSchema.method('toJSON', function() {
+ChatSchema.method('toJSON', function() {
     const { __v, _id, ...object} = this.toObject();
     object.cid = _id;
     return object;
 });
 
-module.exports = model('Chats', CommentSchema);
+module.exports = model('Chats', ChatSchema);
