@@ -7,6 +7,10 @@ const ChatSchema = Schema({
         ref: 'Connect',
         required: true,  
     }, 
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+    },
     message: {
         type: String,
         default: ''

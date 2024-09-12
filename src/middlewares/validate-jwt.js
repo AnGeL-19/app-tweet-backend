@@ -44,10 +44,8 @@ const validationJWTSocket = (socket, next) => {
             try {
               // Verifica el JWT o realiza la validación del token aquí
               const user = jwt.verify(token, process.env.JWT_KEY); // Verifica el JWT
-
-              console.log(user);
               
-            socket.userId = user.uid; // Guarda el ID del usuario en el socket
+              socket.userId = user.uid; // Guarda el ID del usuario en el socket
 
               next(); // Continúa con la conexión
 

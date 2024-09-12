@@ -1,7 +1,9 @@
 const { Server } = require('socket.io');
 const jwt =  require('jsonwebtoken');
-const { connectUser } = require('../controllers/chatController');
+
 const { validationJWTSocket } = require('../middlewares/validate-jwt');
+const { connectUser } = require('../controllers/connectController');
+const { sendMessage, joinChats } = require('../controllers/chatController');
 
 class SocketConfig {
     // 
@@ -25,7 +27,10 @@ class SocketConfig {
         this.io.on('connection', (socket) => {
 
             socket.join(`notification_user_${socket.userId}`);
-            console.log('a user connected', socket.userId);
+
+            // socket.join('66df3b15c852f594face952a');
+
+            joinChats(socket, socket.userId)
 
             socket.on('connect-users', (obj) => {
 
@@ -34,19 +39,19 @@ class SocketConfig {
                 connectUser(socket, obj)
 
                 // Enviar una notificación de ejemplo
-                
+               
 
             });
 
 
-            socket.on('connect-user', (obj) => {
-                // va mandar el usuario y buscara sus coxiones
-            });
 
-            socket.on('chat from', (msg) => {
+            socket.on('sendMessage', (obj) => {
 
-                socket.emit('chat to', msg)
-                console.log('message from: ' + msg);
+                sendMessage(socket, obj)
+                // socket.to('66df3b15c852f594face952a').emit('receiveMessage', obj.message);
+
+                // socket.emit('chat to', msg)
+                // console.log('message from: ' + msg);
             });
 
             socket.on('disconnect', () => {

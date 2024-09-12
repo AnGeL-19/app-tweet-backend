@@ -90,6 +90,7 @@ class Server{
         this.app.use('/api/tweets', require('../router/tweetsPeopleRoute'));
         this.app.use('/api/upload', require('../router/uploadRoute'));
         this.app.use('/api/connect', require('../router/connectRoute'));
+        this.app.use('/api/chat', require('../router/chatRoute'));
     }
 
     configurationSockets(){
