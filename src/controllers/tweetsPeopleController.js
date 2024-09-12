@@ -98,6 +98,8 @@ const getTweetsExplore = async (req = request, res = response) => {
     
     let objFilter = {}
 
+    let objPropertiesFilter = {}
+
     switch (filter) {
         case 'top':
             objFilter={
@@ -115,8 +117,19 @@ const getTweetsExplore = async (req = request, res = response) => {
                 } 
             }
             break;
-        default:
+        case 'media':
+            objPropertiesFilter = {
+                imgTweet: { $exists: true, $ne: "" }, // Busca donde imageUrl y no es null
+            }
             objFilter={
+                sort: {
+                    date: -1,
+                    _id: 1
+                } 
+            }
+        break;
+        default:
+            objFilter={              
                 sort: { 
                     date: -1,
                     _id: 1 
@@ -125,7 +138,7 @@ const getTweetsExplore = async (req = request, res = response) => {
             break;
     }
 
-    console.log(filter);
+    console.log(filter, objPropertiesFilter);
     
 
     try{
@@ -154,11 +167,12 @@ const getTweetsExplore = async (req = request, res = response) => {
         const tweetResponse = await Tweet.find({ 
                 description : { $regex: `${search}` }, 
                 showEveryone: true,
-                ...hashtagsObj
+                ...hashtagsObj,
+                ...objPropertiesFilter
             },
             null,
             {
-                ...objFilter,
+                sort: objFilter.sort,
                 skip: (page - 1) * limit,
                 limit: limit,
             })
@@ -272,7 +286,13 @@ const getTweetsBookMarks = async (req = request, res = response) => {
             optionFilter = {
                 retweets: uid
             }
-            break;       
+            break;  
+        case 'media':
+            optionFilter = {
+                saved: uid,
+                imgTweet: { $exists: true, $ne: "" },
+            }
+            break;
         default:
             optionFilter = {
                 saved: uid

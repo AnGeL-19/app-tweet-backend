@@ -352,6 +352,13 @@ const getTweetsByUserId = async (req, res) => {
             objFilter = { sort: { date: -1, _id: 1 } };
             tweetOptions = { showEveryone: true };
             break;
+        case 'media':
+            objFilter = { sort: { date: -1, _id: 1 } };
+            tweetOptions = { 
+                showEveryone: true, 
+                imgTweet: { $exists: true, $ne: "" }, // Busca donde imageUrl y no es null
+            };
+        break;
         default:
             tweetOptions = { userTweet: id, showEveryone: true };
             break;
