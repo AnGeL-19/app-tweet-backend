@@ -58,8 +58,6 @@ const sendMessage = async (socket, obj) => {
             message: newChat.message,
             user: obj.user,
         }
-
-        //  console.log(messageFormat);
     
          // Emitir a todos los miembros de la sala menos al emisor
         // socket.broadcast.to(roomId).emit('receiveMessage', messageFormat);
