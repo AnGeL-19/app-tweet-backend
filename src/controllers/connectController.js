@@ -126,33 +126,37 @@ const getConnects = async (req = request, res = response) => {
     }
 }
 
-const connectUser = async (socket, obj) => {
+const connectUser = async (req = request, res = response) => {
+
+    const { uid } = req.uid
+    const { userToId } = req.params
+    // const {limit = 5, page = 1} = req.query;
 
     try {
 
         const findConnect = await Connect.findOne({
             $or: [
-              { userFrom: obj.userFrom.id, userTo: obj.userTo },
-              { userFrom: obj.userTo, userTo: obj.userFrom.id }
+              { userFrom: uid, userTo: userToId},
+              { userFrom: userToId, userTo: uid }
             ]
         })
 
         if (findConnect) {
 
             const [ userFromResponse, userToResponse ] = await Promise.all([
-                 User.findByIdAndUpdate(obj.userFrom.id, {
+                 User.findByIdAndUpdate(uid, {
                     $push: {
                         connects: findConnect._id
                     }
                 }, { new: true }),
-                User.findByIdAndUpdate(obj.userTo, {
+                User.findByIdAndUpdate(userToId, {
                     $push: {
                         connects: findConnect._id
                     }
                 }, { new: true })
             ])
 
-            findConnect.updateOne({
+            await findConnect.updateOne({
                 isConnected: true
             })
 
@@ -161,24 +165,32 @@ const connectUser = async (socket, obj) => {
             
         } else {
             const connect = new Connect({
-                userFrom: obj.userFrom.id, 
-                userTo: obj.userTo
+                userFrom: uid, 
+                userTo: userToId
             })
 
             await connect.save();
         }
    
         
-        socket.to(`notification_user_${obj.userTo}`).emit('notification', {
-            user: obj.userFrom,
-            message: findConnect ? `${obj.userFrom.name} Accept your connection` : 'This user want to connect with you'
-        });
+        // socket.to(`notification_user_${obj.userTo}`).emit('notification', {
+        //     user: obj.userFrom,
+        //     message: findConnect ? `${obj.userFrom.name} Accept your connection` : 'This user want to connect with you'
+        // });
        
         // API REST PATCH
 
+        return res.status(200).json({
+            ok: true,
+            message: findConnect ? 'Connection successful, now you can to talk' : 'Connection was sent, now wait for it to accept'
+        });
+
     } catch (error) {
         console.log(error);
-        
+        return res.status(500).json({
+            ok: false,
+            msg: 'Error, talk to the admin'
+        });
     }
 
 }

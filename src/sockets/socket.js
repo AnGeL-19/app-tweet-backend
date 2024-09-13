@@ -32,16 +32,16 @@ class SocketConfig {
 
             joinChats(socket, socket.userId)
 
-            socket.on('connect-users', (obj) => {
+            // socket.on('connect-users', (obj) => {
 
 
-                // const userId = socket.obj.from;
-                connectUser(socket, obj)
+            //     // const userId = socket.obj.from;
+            //     connectUser(socket, obj)
 
-                // Enviar una notificación de ejemplo
+            //     // Enviar una notificación de ejemplo
                
 
-            });
+            // });
 
 
 
