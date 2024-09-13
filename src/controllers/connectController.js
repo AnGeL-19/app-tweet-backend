@@ -20,7 +20,7 @@ const getRecommendConnects = async (req = request, res = response) => {
         },
             null,
             {
-                // sort: { _id: 1 },
+                sort: { _id: 1 },
                 skip: (page - 1) * limit,
                 limit: limit,
         }).populate({   
@@ -130,7 +130,6 @@ const connectUser = async (req = request, res = response) => {
 
     const { uid } = req.uid
     const { userToId } = req.params
-    // const {limit = 5, page = 1} = req.query;
 
     try {
 
@@ -141,27 +140,13 @@ const connectUser = async (req = request, res = response) => {
             ]
         })
 
-        if (findConnect) {
 
-            const [ userFromResponse, userToResponse ] = await Promise.all([
-                 User.findByIdAndUpdate(uid, {
-                    $push: {
-                        connects: findConnect._id
-                    }
-                }, { new: true }),
-                User.findByIdAndUpdate(userToId, {
-                    $push: {
-                        connects: findConnect._id
-                    }
-                }, { new: true })
-            ])
+
+        if (findConnect) {
 
             await findConnect.updateOne({
                 isConnected: true
-            })
-
-            console.log(userFromResponse, userToResponse);
-            
+            }, { new: true })
             
         } else {
             const connect = new Connect({
@@ -169,20 +154,31 @@ const connectUser = async (req = request, res = response) => {
                 userTo: userToId
             })
 
+            const [ userFromResponse, userToResponse ] = await Promise.all([
+                User.findByIdAndUpdate(uid, {
+                   $push: {
+                       connects: connect._id
+                   }
+               }, { new: true }),
+               User.findByIdAndUpdate(userToId, {
+                   $push: {
+                       connects: connect._id
+                   }
+               }, { new: true })
+           ])
+
             await connect.save();
         }
    
         
-        // socket.to(`notification_user_${obj.userTo}`).emit('notification', {
-        //     user: obj.userFrom,
-        //     message: findConnect ? `${obj.userFrom.name} Accept your connection` : 'This user want to connect with you'
-        // });
-       
-        // API REST PATCH
-
         return res.status(200).json({
             ok: true,
-            message: findConnect ? 'Connection successful, now you can to talk' : 'Connection was sent, now wait for it to accept'
+            message: findConnect ? 'Connection successful, now you can to talk' : 'Connection was sent, now wait for it to accept',
+            connect: {
+                connectId: findConnect ? findConnect._id : '',
+                isPending: findConnect ? findConnect.isConnected : true,
+                isConnected: findConnect ? !findConnect.isConnected : false,
+            }
         });
 
     } catch (error) {

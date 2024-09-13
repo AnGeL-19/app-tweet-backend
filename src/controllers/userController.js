@@ -56,12 +56,24 @@ const getUserById = async (req = request, res) => {
 
     try{
 
-        const user = await User.findById(id);
+        const user = await User.findById(id)
+        .populate({
+            path: 'connects'
+        });
 
         if(user){
 
-            const {followers, following, ...rest} = user;
+            const {followers, following, connects,...rest} = user;
             const { _id: uid, ...restdata } = rest._doc
+
+            console.log(connects);
+
+
+            const isConnected = connects.some( connect  => (connect.userFrom.toString() === uidAuth || connect.userTo.toString() === uidAuth) && connect.isConnected  )
+            const isPending = connects.some( connect  => (connect.userFrom.toString() === uidAuth || connect.userTo.toString() === uidAuth) && !connect.isConnected  )
+            const connectId = connects.find( connect  => (connect.userFrom.toString() === uidAuth || connect.userTo.toString() === uidAuth) && connect.isConnected )
+            console.log(connectId, isConnected, isPending,'IS CONNECTED');
+            
 
             return res.status(200).json({
                 ok: true,
@@ -71,7 +83,12 @@ const getUserById = async (req = request, res) => {
                     nfollowers: followers.length,
                     nfollowing: following.length
                 },
-                isFollowing: followers.includes(uidAuth)
+                isFollowing: followers.includes(uidAuth),
+                connect: {
+                    connectId: connectId ? connectId._id : '',
+                    isConnected,
+                    isPending
+                }
             })
 
         }else{
