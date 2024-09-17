@@ -10,7 +10,7 @@ class SocketConfig {
             cors: {
                 origin: ['https://tweet-app-ashy.vercel.app', 'http://localhost:5173'],
                 methods: ['GET', 'POST'], // Asegúrate de especificar los métodos
-                allowedHeaders: ['Authorization'], // Añade los headers necesarios
+                allowedHeaders: ['authorization'], // Añade los headers necesarios
                 credentials: true
             }
         });
