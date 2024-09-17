@@ -12,7 +12,8 @@ class SocketConfig {
                 methods: ['GET', 'POST'], // Asegúrate de especificar los métodos
                 allowedHeaders: ['authorization'], // Añade los headers necesarios
                 credentials: true,
-            }
+            },
+            transports: ['polling'] // Usar "polling" en lugar de WebSocket
         });
         this.middlewares()
     }
