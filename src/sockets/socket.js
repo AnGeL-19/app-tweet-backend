@@ -9,6 +9,8 @@ class SocketConfig {
         this.io = new Server(server, {
             cors: {
                 origin: ['https://tweet-app-ashy.vercel.app', 'http://localhost:5173'],
+                methods: ['GET', 'POST'], // Asegúrate de especificar los métodos
+                allowedHeaders: ['Content-Type', 'Authorization'], // Añade los headers necesarios
                 credentials: true
             }
         });
