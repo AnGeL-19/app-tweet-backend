@@ -11,7 +11,7 @@ class SocketConfig {
                 origin: ['https://tweet-app-ashy.vercel.app', 'http://localhost:5173'],
                 methods: ['GET', 'POST'], // Asegúrate de especificar los métodos
                 allowedHeaders: ['authorization'], // Añade los headers necesarios
-                credentials: true
+                credentials: true,
             }
         });
         this.middlewares()
@@ -22,9 +22,11 @@ class SocketConfig {
     }
 
     connection(){
-        // console.log(this.io);
         
         this.io.on('connection', (socket) => {
+
+            console.log('CONNECT ',socket.userId);
+            
 
             socket.join(`notification_user_${socket.userId}`);
 
