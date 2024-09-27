@@ -13,7 +13,7 @@ class SocketConfig {
                 allowedHeaders: ['authorization'], // Añade los headers necesarios
                 credentials: true,
             },
-            transports: ['polling'] // Usar "polling" en lugar de WebSocket
+            // transports: ['polling'] // Usar "polling" en lugar de WebSocket
         });
         this.middlewares()
     }

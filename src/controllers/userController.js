@@ -7,7 +7,7 @@ const User = require('../models/user');
 const getUsers = async (req = request, res) => {
 
     const { uid: uidAuth } = req.uid;
-    const { search = '', limit = 5, page = 1 } = req.query;
+    const { search = '', limit = 10, page = 1 } = req.query;
 
     try{
 
@@ -24,7 +24,7 @@ const getUsers = async (req = request, res) => {
             $nor: [{_id: uidAuth }, ...followings] },
             null,
             {
-                // sort: { _id: 1 },
+                sort: { _id: 1 },
                 skip: (page - 1) * limit,
                 limit: limit,
             }
