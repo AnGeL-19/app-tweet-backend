@@ -5,6 +5,9 @@ const { getUrlPublicId } = require('../helpers/getPublicId');
 const cloudinary = require('cloudinary').v2
 cloudinary.config( process.env.CLOUDINARY_URL );
 
+const PUBLIC_ID_IMG_PROFILE_DEFAUL = 'user-icon_khuyf8_icon-user_rb7lxu';
+const PUBLIC_ID_IMG_BACKGROUND_DEFAUL = 'bg-image_bqnkay';
+
 const updateUserBackgroundImage = async (req = request, res) => {
 
     const { uid } = req.uid;
@@ -17,7 +20,12 @@ const updateUserBackgroundImage = async (req = request, res) => {
 
         const url = getUrlPublicId(userImage.imgUserBackground)
 
-        if( url !== public_id ){
+        console.log(url !== public_id, 'URL - PUBLIC', url, public_id);
+        
+
+        if( url !== PUBLIC_ID_IMG_BACKGROUND_DEFAUL ){
+            console.log('lo borra');
+            
             await cloudinary.uploader.destroy(public_id);
         } 
 
@@ -63,11 +71,12 @@ const updateUserImage = async (req = request, res) => {
 
     try{
         
-        const userImage = await User.findById(uid).select('_id imgUserBackground');
+        const userImage = await User.findById(uid).select('_id imgUser');
 
-        const url = getUrlPublicId(userImage.imgUserBackground)
+        const url = getUrlPublicId(userImage.imgUser)
 
-        if( url !== public_id ){
+        if( url !== PUBLIC_ID_IMG_PROFILE_DEFAUL ){
+
             await cloudinary.uploader.destroy(public_id);
         } 
 
